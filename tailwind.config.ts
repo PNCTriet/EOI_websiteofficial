@@ -11,6 +11,14 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        brand: {
+          pink: "#F96C9D",
+          blue: "#2B6CE6",
+          yellow: "#F3BA43",
+        },
+      },
+      fontFamily: {
+        sans: ['Quicksand', 'system-ui', 'sans-serif'],
       },
     },
   },
