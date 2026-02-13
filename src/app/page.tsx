@@ -31,7 +31,7 @@ export default function Home() {
             EOI LINH TINH
           </h1>
           <p className="text-base sm:text-lg text-gray-600 max-w-lg mx-auto font-normal leading-relaxed">
-            "From my bedroom to your hands."
+            &ldquo;From my bedroom to your hands.&rdquo;
           </p>
         </header>
 
