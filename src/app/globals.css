@@ -9,10 +9,33 @@
   --foreground: #1F2937;
 }
 
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes logo-fade {
+  0% {
+    opacity: 0.85;
+    transform: translate(0, 0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1.2);
+    filter: blur(4px);
+  }
+}
+
+.animate-logo-fade {
+  animation: logo-fade 0.8s ease-out forwards;
 }

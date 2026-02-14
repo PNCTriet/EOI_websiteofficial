@@ -23,19 +23,19 @@ function getTimeLeft() {
 const boxes = [
   { 
     key: "days" as const, 
-    label: "Ngày"
+    label: "days"
   },
   { 
     key: "hours" as const, 
-    label: "Giờ"
+    label: "hours"
   },
   { 
     key: "minutes" as const, 
-    label: "Phút"
+    label: "minutes"
   },
   { 
     key: "seconds" as const, 
-    label: "Giây"
+    label: "seconds"
   },
 ];
 
@@ -48,23 +48,23 @@ export default function CountdownAndForm() {
   }, []);
 
   return (
-    <section className="w-full max-w-lg mx-auto flex flex-col items-center gap-8 sm:gap-10">
+    <section className="w-full max-w-lg mx-auto flex min-h-0 flex-shrink flex-col items-center justify-center gap-3 sm:gap-4 md:gap-5">
       {/* Launch Date Heading */}
-      <h2 className="text-gray-800 font-semibold text-lg sm:text-xl">
+      <h2 className="text-gray-800 font-semibold text-sm sm:text-base md:text-lg flex-shrink-0">
         Dropping on March 20, 2026
       </h2>
 
       {/* Countdown - Light Style */}
-      <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 flex-shrink-0">
         {boxes.map(({ key, label }) => (
           <div
             key={key}
-            className="flex flex-col items-center justify-center min-w-[5rem] sm:min-w-[6rem] py-5 px-4 sm:py-6 sm:px-5 rounded-2xl border border-gray-200 bg-gray-50 shadow-sm"
+            className="flex flex-col items-center justify-center min-w-[3.5rem] sm:min-w-[4.5rem] md:min-w-[5rem] py-3 px-2 sm:py-4 sm:px-3 md:py-5 md:px-4 rounded-xl border border-gray-200 bg-gray-50 shadow-sm"
           >
-            <span className="text-3xl sm:text-4xl font-bold tabular-nums text-gray-800">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums text-gray-800">
               {String(timeLeft[key]).padStart(2, "0")}
             </span>
-            <span className="text-xs sm:text-sm font-medium mt-2 text-gray-600">
+            <span className="text-[10px] sm:text-xs font-medium mt-1 text-gray-600">
               {label}
             </span>
           </div>
@@ -76,10 +76,10 @@ export default function CountdownAndForm() {
         href="https://instagram.com/eoilinhtinh"
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex items-center justify-center gap-2 px-6 py-4 sm:px-8 sm:py-4 rounded-full border-2 border-gray-800 text-gray-800 font-semibold text-base sm:text-lg transition-all duration-300 hover:bg-gray-800 hover:text-white active:scale-95"
+        className="group flex flex-shrink-0 items-center justify-center gap-1.5 sm:gap-2 px-4 py-2.5 sm:px-6 sm:py-3 rounded-full border-2 border-gray-800 text-gray-800 font-semibold text-sm sm:text-base transition-all duration-300 hover:bg-gray-800 hover:text-white active:scale-95"
       >
         <svg
-          className="w-5 h-5 sm:w-6 sm:h-6"
+          className="w-4 h-4 sm:w-5 sm:h-5"
           fill="currentColor"
           viewBox="0 0 24 24"
           aria-hidden="true"

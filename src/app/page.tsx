@@ -1,18 +1,13 @@
 import CountdownAndForm from "@/components/CountdownAndForm";
+import MouseLogoTrail from "@/components/MouseLogoTrail";
 
 export default function Home() {
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center bg-white px-4 py-8 sm:px-6 sm:py-12">
-      <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-2xl gap-8 sm:gap-10">
-        {/* Eyebrow Badge */}
-        <div className="px-4 py-1.5 rounded-full bg-gray-100 border border-gray-200">
-          <span className="text-xs sm:text-sm text-gray-600 tracking-widest uppercase font-medium">
-            ✦ 3D STORE AT PACIFIC PLACE SAIGON IS COMING! ✦
-          </span>
-        </div>
-
-        {/* Logo video - Glass frame effect */}
-        <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-3xl overflow-hidden bg-white/40 backdrop-blur-md border border-white/60 shadow-lg">
+    <main className="relative flex h-dvh min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-3 py-4 sm:px-6 sm:py-6">
+      <MouseLogoTrail />
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:gap-5 md:gap-6 w-full max-w-2xl">
+        {/* Logo video - no frame, no shadow, matches background */}
+        <div className="flex-shrink-0 w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 bg-transparent">
           <video
             src="/logo-animation.mp4"
             autoPlay
@@ -26,11 +21,11 @@ export default function Home() {
         </div>
 
         {/* Headline & Subtitle */}
-        <header className="text-center space-y-3 sm:space-y-4">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">
+        <header className="text-center space-y-1 sm:space-y-2 flex-shrink-0">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">
             EOI LINH TINH
           </h1>
-          <p className="text-base sm:text-lg text-gray-600 max-w-lg mx-auto font-normal leading-relaxed">
+          <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto font-normal leading-snug">
             &ldquo;From my bedroom to your hands.&rdquo;
           </p>
         </header>
