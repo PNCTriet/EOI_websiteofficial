@@ -28,6 +28,21 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
+### Trang cảm ơn sản phẩm (NFC)
+
+- **URL:** `/product/thank-you?p=<productId>&sig=<signature>`
+- Link được **ký bằng HMAC** (secret trong `EOI_PRODUCT_LINK_SECRET`) nên không thể tự tạo link hợp lệ nếu không có secret — chống giả mạo.
+- Copy link vẫn dùng được (một link cho một sản phẩm); mỗi NFC tag nên dùng một `productId` riêng nếu cần phân biệt từng sản phẩm.
+
+**Tạo link để ghi vào NFC:**
+
+1. Copy `.env.example` thành `.env.local` và đặt `EOI_PRODUCT_LINK_SECRET` (tối thiểu 16 ký tự).
+2. Chạy script (thay `your-secret`, `product-id`, và base URL nếu cần):
+   ```bash
+   EOI_PRODUCT_LINK_SECRET="your-secret" node scripts/generate-product-link.mjs "product-id" "https://your-domain.com"
+   ```
+3. Ghi URL in ra vào NFC tag.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
