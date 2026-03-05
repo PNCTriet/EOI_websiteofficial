@@ -1,9 +1,14 @@
+import ProductModelViewer3MF from "@/components/ProductModelViewer3MF";
+
 /**
  * Nội dung trang cảm ơn khi link hợp lệ (signed URL từ NFC).
- * Mở rộng: có thể thêm block "Xác thực sản phẩm" với model 3D (model-viewer / Three.js)
- * tương tự Apple để khách xem mã/kiểm tra hàng chính hãng.
+ * Có thể gắn file .3mf theo productId: đặt file tại public/models/{productId}.3mf
  */
-export default function ProductThankYouContent() {
+type Props = { productId: string };
+
+export default function ProductThankYouContent({ productId }: Props) {
+  const modelUrl = `/models/${encodeURIComponent(productId)}.3mf`;
+
   return (
     <>
       {/* Logo video - giống trang chủ */}
@@ -30,17 +35,12 @@ export default function ProductThankYouContent() {
         </p>
       </header>
 
-      {/* Mở rộng: Xác thực sản phẩm kiểu Apple – khi có file 3D có thể nhúng tại đây */}
-      <section
-        className="flex-shrink-0 w-full max-w-sm rounded-xl border border-gray-200 bg-gray-50/80 p-4 text-center"
-        aria-label="Xác thực sản phẩm"
-      >
-        <p className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider">
-          Xác thực sản phẩm
+      {/* Mô hình 3D sản phẩm (.3mf) — file tại public/models/{productId}.3mf */}
+      <section className="flex-shrink-0 w-full max-w-sm" aria-label="Xác thực sản phẩm">
+        <p className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider text-center mb-2">
+          Xem mô hình 3D
         </p>
-        <p className="mt-1 text-sm text-gray-600">
-          Bạn đã truy cập bằng link chính hãng từ NFC. Sau này có thể thêm mô hình 3D tại đây để xem chi tiết sản phẩm.
-        </p>
+        <ProductModelViewer3MF modelUrl={modelUrl} className="w-full" />
       </section>
     </>
   );

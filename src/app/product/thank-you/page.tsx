@@ -40,7 +40,7 @@ export default async function ProductThankYouPage({ searchParams }: Props) {
     <main className="relative flex h-dvh min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-3 py-4 sm:px-6 sm:py-6">
       <MouseLogoTrail />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:gap-5 md:gap-6 w-full max-w-2xl">
-        <ProductThankYouContent />
+        <ProductThankYouContent productId={p} />
       </div>
     </main>
   );
