@@ -9,16 +9,39 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        brand: {
-          pink: "#F96C9D",
-          blue: "#2B6CE6",
-          yellow: "#F3BA43",
+        eoi: {
+          pink: "var(--eoi-pink)",
+          "pink-dark": "var(--eoi-pink-dark)",
+          "pink-light": "var(--eoi-pink-light)",
+          blue: "var(--eoi-blue)",
+          "blue-dark": "var(--eoi-blue-dark)",
+          "blue-light": "var(--eoi-blue-light)",
+          amber: "var(--eoi-amber)",
+          "amber-dark": "var(--eoi-amber-dark)",
+          "amber-light": "var(--eoi-amber-light)",
+          ink: "var(--eoi-ink)",
+          ink2: "var(--eoi-ink2)",
+          surface: "var(--eoi-surface)",
+          border: "var(--eoi-border)",
+          bg: "var(--eoi-bg)",
+          "green-light": "var(--eoi-green-light)",
+          "purple-light": "var(--eoi-purple-light)",
         },
       },
       fontFamily: {
-        sans: ['Quicksand', 'system-ui', 'sans-serif'],
+        /** Mặc định + alias cũ: cùng Inter */
+        sans: [
+          "var(--font-sans)",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif",
+        ],
+        syne: ["var(--font-sans)", "system-ui", "sans-serif"],
+        dm: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
     },
   },
