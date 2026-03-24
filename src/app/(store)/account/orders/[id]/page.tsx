@@ -30,6 +30,20 @@ export default async function AccountOrderDetailPage({ params }: Props) {
     .select("id,product_name_snapshot,quantity,unit_price")
     .eq("order_id", order.id);
 
+  const progress = (() => {
+    if (order.stage === "pending_payment") return 1;
+    if (order.stage === "paid") return 2;
+    if (order.stage === "processing" || order.stage === "printing") return 3;
+    if (order.stage === "shipped" || order.stage === "delivered") return 4;
+    return 1;
+  })();
+  const checkpoints = [
+    { key: "payment", label: "Payment" },
+    { key: "processing", label: "Processing" },
+    { key: "delivery", label: "Delivery" },
+    { key: "finish", label: "Finish" },
+  ];
+
   return (
     <div className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
       <h2 className="font-syne text-lg font-bold text-eoi-ink">
@@ -41,6 +55,33 @@ export default async function AccountOrderDetailPage({ params }: Props) {
       <p className="mt-2 font-syne text-base font-bold text-eoi-ink">
         {formatPrice(locale, order.total_amount)}
       </p>
+
+      <div className="mt-4 rounded-xl border border-eoi-border bg-eoi-surface/50 p-4">
+        <div className="relative mx-auto max-w-2xl">
+          <div className="absolute left-0 right-0 top-3 h-1 rounded-full bg-eoi-border" />
+          <div
+            className="absolute left-0 top-3 h-1 rounded-full bg-eoi-pink transition-all"
+            style={{ width: `${((progress - 1) / (checkpoints.length - 1)) * 100}%` }}
+          />
+          <div className="relative grid grid-cols-4 gap-2">
+            {checkpoints.map((cp, idx) => {
+              const done = idx + 1 <= progress;
+              return (
+                <div key={cp.key} className="text-center">
+                  <span
+                    className={`mx-auto block h-6 w-6 rounded-full border-2 ${
+                      done ? "border-eoi-pink bg-eoi-pink" : "border-eoi-border bg-white"
+                    }`}
+                  />
+                  <p className={`mt-2 font-dm text-xs ${done ? "text-eoi-ink" : "text-eoi-ink2"}`}>
+                    {cp.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       <div className="mt-4 space-y-2">
         {(items ?? []).map((it) => (

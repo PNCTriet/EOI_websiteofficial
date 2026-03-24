@@ -155,8 +155,16 @@ Neu chua apply, mot so feature moi se loi do schema/policy chua cap nhat.
 - Da nang cap pending payment:
   - hien QR chuyen khoan VPBank
   - hien countdown het han
-  - polling status `/api/orders/[id]/status`
+  - polling status `/api/payment-intents/[id]/status`
   - popup khi thanh toan thanh cong
+  - chi tao `orders` sau khi webhook xac nhan da thanh toan (khong tao som luc bam nut thanh toan)
+
+### Cap nhat moi (sua theo feedback)
+- Them bang `payment_intents` de luu phien thanh toan tam:
+  - checkout se tao `payment_intents` (pending) + `sepay_ref`
+  - webhook `POST /api/webhook/payment` moi tao `orders` va `order_items` khi giao dich hop le
+  - cron expire chuyen sang expire `payment_intents` pending qua han
+- Them progress timeline o trang chi tiet don user (`/account/orders/[id]`) de khi bam vao don hang co the thay trang thai truc quan.
 
 ### Con thieu trong Phase 3 (theo payment.md)
 - Da hoan tat:

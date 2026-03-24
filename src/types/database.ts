@@ -178,6 +178,59 @@ export type Database = {
         };
         Relationships: [];
       };
+      payment_intents: {
+        Row: {
+          id: string;
+          user_id: string;
+          sepay_ref: string;
+          amount: number;
+          cart_snapshot: Json;
+          shipping_addr: Json | null;
+          note: string | null;
+          expires_at: string;
+          status: string;
+          order_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          sepay_ref: string;
+          amount: number;
+          cart_snapshot: Json;
+          shipping_addr?: Json | null;
+          note?: string | null;
+          expires_at: string;
+          status?: string;
+          order_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          sepay_ref?: string;
+          amount?: number;
+          cart_snapshot?: Json;
+          shipping_addr?: Json | null;
+          note?: string | null;
+          expires_at?: string;
+          status?: string;
+          order_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_intents_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       customers: {
         Row: {
           id: string;

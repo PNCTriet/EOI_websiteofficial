@@ -1,9 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 
-/**
- * Internal endpoint for cron: expire pending_payment orders past expires_at.
- * Protect via x-cron-secret header.
- */
+/** Internal endpoint for cron: expire stale payment intents. */
 export async function POST(request: Request) {
   const secret = process.env.CRON_EXPIRE_SECRET;
   if (secret) {
@@ -15,10 +12,10 @@ export async function POST(request: Request) {
 
   const supabase = createServiceClient();
   const now = new Date().toISOString();
-  const { data: expiredOrders, error } = await supabase
-    .from("orders")
-    .update({ stage: "expired" })
-    .eq("stage", "pending_payment")
+  const { data: expiredIntents, error } = await supabase
+    .from("payment_intents")
+    .update({ status: "expired" })
+    .eq("status", "pending")
     .lt("expires_at", now)
     .select("id");
 
@@ -26,15 +23,5 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, message: error.message }, { status: 500 });
   }
 
-  if (expiredOrders?.length) {
-    await supabase.from("order_stage_logs").insert(
-      expiredOrders.map((o) => ({
-        order_id: o.id,
-        from_stage: "pending_payment" as const,
-        to_stage: "expired" as const,
-      }))
-    );
-  }
-
-  return Response.json({ ok: true, expired: expiredOrders?.length ?? 0 });
+  return Response.json({ ok: true, expired: expiredIntents?.length ?? 0 });
 }

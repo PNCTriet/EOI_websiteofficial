@@ -125,3 +125,5 @@
 - Migration mới phải apply trên Supabase production trước khi release
 - Thứ tự ưu tiên: **Phase 1** → **Phase 2 (Auth)** → **Phase 3 (Payment)** → **Phase 4 (Order)**
 - Phase 2 và 3 phụ thuộc lẫn nhau — hoàn thành Auth trước khi build Checkout
+- [x] Checkout flow da doi sang `payment_intents`: chi tao `orders` khi webhook payment xac nhan thanh toan thanh cong
+- [x] Da bo sung progress timeline o trang chi tiet don `/account/orders/[id]`

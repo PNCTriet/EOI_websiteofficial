@@ -69,11 +69,11 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
           const fd = new FormData(e.currentTarget);
           startTransition(() => {
             void createCheckoutOrder(fd).then((res) => {
-              if (!res.ok || !res.orderId) {
+              if (!res.ok || !res.intentId) {
                 setError(res.message ?? t("common.error"));
                 return;
               }
-              router.push(`/checkout/pending/${res.orderId}`);
+              router.push(`/checkout/pending/${res.intentId}`);
             });
           });
         }}

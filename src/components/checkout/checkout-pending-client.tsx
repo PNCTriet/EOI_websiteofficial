@@ -8,16 +8,16 @@ import { formatPrice } from "@/lib/format-locale";
 import { useLocaleContext } from "@/components/locale-provider";
 
 type Props = {
-  orderId: string;
+  intentId: string;
   sepayRef: string;
   totalAmount: number;
   expiresAt: string | null;
 };
 
-export function CheckoutPendingClient({ orderId, sepayRef, totalAmount, expiresAt }: Props) {
+export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expiresAt }: Props) {
   const { locale } = useLocaleContext();
   const router = useRouter();
-  const [stage, setStage] = useState("pending_payment");
+  const [stage, setStage] = useState("pending");
   const [showSuccess, setShowSuccess] = useState(false);
   const [now, setNow] = useState(Date.now());
   const expired = useMemo(() => {
@@ -32,28 +32,28 @@ export function CheckoutPendingClient({ orderId, sepayRef, totalAmount, expiresA
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      void fetch(`/api/orders/${orderId}/status`)
+      void fetch(`/api/payment-intents/${intentId}/status`)
         .then((r) => r.json())
-        .then((d: { stage?: string }) => {
-          if (!d.stage) return;
-          setStage(d.stage);
-          if (d.stage === "paid") {
+        .then((d: { status?: string; order_id?: string | null }) => {
+          if (!d.status) return;
+          setStage(d.status);
+          if (d.status === "paid" && d.order_id) {
             setShowSuccess(true);
             window.setTimeout(() => {
-              router.push(`/checkout/success/${orderId}`);
+              router.push(`/checkout/success/${d.order_id}`);
             }, 1200);
           }
-          if (d.stage === "expired") {
+          if (d.status === "expired") {
             router.push("/checkout/failed?reason=expired");
           }
         });
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [orderId, router]);
+  }, [intentId, router]);
 
   const msLeft = expiresAt ? Math.max(0, new Date(expiresAt).getTime() - now) : 0;
   useEffect(() => {
-    if (expired && stage === "pending_payment") {
+    if (expired && stage === "pending") {
       router.push("/checkout/failed?reason=expired");
     }
   }, [expired, stage, router]);
@@ -67,7 +67,7 @@ export function CheckoutPendingClient({ orderId, sepayRef, totalAmount, expiresA
     sepayRef
   )}&accountName=${encodeURIComponent(accountName)}`;
   const progress = (() => {
-    if (stage === "pending_payment") return 1;
+    if (stage === "pending") return 1;
     if (stage === "paid") return 2;
     if (stage === "processing" || stage === "printing") return 3;
     if (stage === "shipped" || stage === "delivered") return 4;
@@ -166,7 +166,7 @@ export function CheckoutPendingClient({ orderId, sepayRef, totalAmount, expiresA
               className="mt-4 min-h-[44px] rounded-full bg-eoi-ink px-5 py-2 font-dm text-sm font-semibold text-white"
               onClick={() => {
                 setShowSuccess(false);
-                router.push(`/account/orders/${orderId}`);
+                router.push("/account/orders");
               }}
             >
               Xem chi tiet don

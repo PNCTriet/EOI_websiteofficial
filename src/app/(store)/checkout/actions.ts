@@ -51,7 +51,7 @@ async function generateUniqueRef() {
 export async function createCheckoutOrder(formData: FormData): Promise<{
   ok: boolean;
   message?: string;
-  orderId?: string;
+  intentId?: string;
 }> {
   const supabase = await createClient();
   const {
@@ -125,45 +125,22 @@ export async function createCheckoutOrder(formData: FormData): Promise<{
   const sepayRef = await generateUniqueRef();
   const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-  const { data: order, error: orderErr } = await admin
-    .from("orders")
+  const { data: intent, error: intentErr } = await admin
+    .from("payment_intents")
     .insert({
       user_id: user.id,
-      total_amount: total,
-      stage: "pending_payment",
       sepay_ref: sepayRef,
+      amount: total,
+      cart_snapshot: cartItems,
       shipping_addr: shippingAddr,
       note: note || null,
-      payment_method: "bank_transfer",
       expires_at: expiresAt,
     })
     .select("id")
     .single();
-  if (orderErr || !order) {
-    return { ok: false, message: "Could not create order" };
+  if (intentErr || !intent) {
+    return { ok: false, message: "Could not create payment intent" };
   }
-
-  const orderItems = cartItems.map((item) => {
-    const p = map.get(item.productId)!;
-    return {
-      order_id: order.id,
-      product_id: item.productId,
-      quantity: item.quantity,
-      unit_price: p.price!,
-      product_name_snapshot: p.name,
-    };
-  });
-  const { error: itemErr } = await admin.from("order_items").insert(orderItems);
-  if (itemErr) {
-    await admin.from("orders").delete().eq("id", order.id);
-    return { ok: false, message: "Could not create order items" };
-  }
-
-  await admin.from("order_stage_logs").insert({
-    order_id: order.id,
-    from_stage: null,
-    to_stage: "pending_payment",
-  });
 
   if (saveAddress) {
     await admin
@@ -171,6 +148,5 @@ export async function createCheckoutOrder(formData: FormData): Promise<{
       .upsert({ id: user.id, default_address: shippingAddr }, { onConflict: "id" });
   }
 
-  revalidatePath("/account/orders");
-  return { ok: true, orderId: order.id };
+  return { ok: true, intentId: intent.id };
 }
