@@ -24,7 +24,9 @@ async function getProduct(id: string): Promise<ProductRow | null> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
-      .select("*")
+      .select(
+        "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at"
+      )
       .eq("id", id)
       .single();
     if (!error && data) {

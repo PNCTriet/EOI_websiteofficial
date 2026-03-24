@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 type Props = {
   imageUrls: string[] | null;
@@ -28,11 +29,12 @@ export function ProductImageGallery({
         }}
       >
         {main ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={main}
             alt=""
-            className="h-full w-full object-cover object-center"
+            fill
+            sizes="(max-width: 768px) 100vw, 640px"
+            className="object-cover object-center"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -66,11 +68,12 @@ export function ProductImageGallery({
                   safeIndex === i ? undefined : accentBg ?? "var(--eoi-pink-light)",
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={url}
                 alt=""
-                className="h-full w-full object-cover object-center"
+                fill
+                sizes="58px"
+                className="object-cover object-center"
               />
             </button>
           ))}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { CategoryChips } from "@/components/category-chips";
@@ -19,7 +20,9 @@ async function fetchProducts(): Promise<ProductRow[]> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
-      .select("*")
+      .select(
+        "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at"
+      )
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
@@ -146,11 +149,12 @@ export default async function StoreHomePage() {
                   );
                 })()}
                 {p.image_urls?.[0] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={p.image_urls[0]}
                     alt=""
-                    className="h-full w-full object-cover object-center"
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    className="object-cover object-center"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
