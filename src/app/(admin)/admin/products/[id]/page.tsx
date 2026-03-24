@@ -130,6 +130,16 @@ export default function AdminProductFormPage() {
     const supabase = createClient();
     const next: string[] = [...imageUrls];
     for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) {
+        setError(t("admin.products.invalidImageType"));
+        setUploading(false);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError(t("admin.products.imageTooLarge"));
+        setUploading(false);
+        return;
+      }
       const path = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
       const { error: upErr } = await supabase.storage
         .from("product-images")

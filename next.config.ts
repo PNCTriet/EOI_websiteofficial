@@ -13,6 +13,10 @@ const supabaseHost = (() => {
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "img.vietqr.io",
+      },
       ...(supabaseHost
         ? [
             {

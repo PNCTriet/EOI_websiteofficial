@@ -13,7 +13,6 @@ import {
   X,
 } from "lucide-react";
 import { EoiLogo } from "@/components/eoi-logo";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { useTranslations } from "@/components/locale-provider";
 import { createClient } from "@/lib/supabase/client";
 
@@ -36,7 +35,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     setLoggingOut(true);
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/admin/login");
     router.refresh();
   }
 
@@ -58,9 +57,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <p className="mt-1 font-dm text-[10px] font-medium uppercase tracking-wider text-[#666666]">
           Admin
         </p>
-        <div className="mt-3">
-          <LanguageSwitcher variant="onDark" />
-        </div>
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 py-4">
         {NAV.map(({ href, labelKey, icon: Icon }) => (
@@ -94,7 +90,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       <div className="sticky top-0 z-50 flex items-center justify-between border-b border-eoi-border bg-eoi-ink px-4 py-3 md:hidden">
         <EoiLogo heightClass="h-7" />
         <div className="flex items-center gap-2">
-          <LanguageSwitcher variant="onDark" />
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}

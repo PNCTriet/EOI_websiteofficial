@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { House, Search, ShoppingBag, User } from "lucide-react";
 import { EoiLogo } from "@/components/eoi-logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useCart } from "@/components/cart/cart-context";
 import { useTranslations } from "@/components/locale-provider";
+import { createClient } from "@/lib/supabase/client";
 
 function NavIcon({
   href,
@@ -47,11 +49,33 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const t = useTranslations();
   const { itemCount, mounted: cartMounted } = useCart();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const cartCount = cartMounted ? itemCount : 0;
   const isHome = pathname === "/";
   const isSearch = pathname === "/search";
   const isCart = pathname === "/cart";
   const isAccount = pathname === "/account";
+  const shortName = useMemo(() => {
+    if (!userEmail) return null;
+    return userEmail.slice(0, 1).toUpperCase();
+  }, [userEmail]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let cancelled = false;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (!cancelled) setUserEmail(data.user?.email ?? null);
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_evt, session) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <div className="min-h-dvh bg-eoi-bg pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
@@ -65,7 +89,23 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
             <EoiLogo heightClass="h-[5.25rem]" priority />
           </Link>
           <div className="flex items-center gap-2">
-            <LanguageSwitcher />
+            {isHome ? <LanguageSwitcher /> : null}
+            {userEmail ? (
+              <Link
+                href="/account"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-eoi-border bg-white font-dm text-sm font-semibold text-eoi-ink"
+                aria-label={t("nav.account")}
+              >
+                {shortName ?? "U"}
+              </Link>
+            ) : (
+              <Link
+                href={`/login?next=${encodeURIComponent(pathname || "/")}`}
+                className="inline-flex min-h-[44px] items-center rounded-full border border-eoi-border px-4 font-dm text-sm font-medium text-eoi-ink"
+              >
+                {t("nav.login")}
+              </Link>
+            )}
             <Link
               href="/search"
               className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-eoi-ink"

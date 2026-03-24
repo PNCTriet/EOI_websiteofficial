@@ -1,44 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { EoiLogo } from "@/components/eoi-logo";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { useTranslations } from "@/components/locale-provider";
-import { isUserAdmin } from "@/lib/auth-helpers";
 import { createClient } from "@/lib/supabase/client";
+import { Chrome, Facebook } from "lucide-react";
 
-export default function LoginPage() {
+export default function StoreLoginPage() {
   const t = useTranslations();
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const search = useSearchParams();
+  const nextPath = search.get("next") ?? "/account";
+  const authFailed = search.get("error") === "auth_failed";
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<"google" | "facebook" | null>(
+    null
+  );
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function signInWithProvider(provider: "google" | "facebook") {
     setError(null);
-    setLoading(true);
+    setLoadingProvider(provider);
     try {
       const supabase = createClient();
-      const { data, error: signErr } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error: signErr } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+            nextPath
+          )}`,
+        },
       });
       if (signErr) {
         setError(signErr.message);
-        return;
       }
-      if (!isUserAdmin(data.user)) {
-        await supabase.auth.signOut();
-        setError(t("login.notAdminError"));
-        return;
-      }
-      router.push("/admin");
-      router.refresh();
     } finally {
-      setLoading(false);
+      setLoadingProvider(null);
     }
   }
 
@@ -47,54 +43,49 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-2xl border border-eoi-border bg-white p-8 shadow-sm">
         <div className="flex flex-col items-center gap-3">
           <EoiLogo heightClass="h-14" />
-          <LanguageSwitcher />
         </div>
-        <p className="mt-2 text-center font-dm text-xs font-medium uppercase tracking-wider text-eoi-ink2">
-          {t("login.adminBadge")}
+        <h1 className="mt-3 text-center font-syne text-xl font-bold text-eoi-ink">
+          {t("storeLogin.title")}
+        </h1>
+        <p className="mt-1 text-center font-dm text-sm text-eoi-ink2">
+          {t("storeLogin.subtitle")}
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          <div>
-            <label htmlFor="email" className="font-dm text-xs font-medium text-eoi-ink2">
-              {t("login.email")}
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full min-h-[44px] rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm text-eoi-ink outline-none focus:ring-2 focus:ring-eoi-pink/30"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="font-dm text-xs font-medium text-eoi-ink2">
-              {t("login.password")}
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full min-h-[44px] rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm text-eoi-ink outline-none focus:ring-2 focus:ring-eoi-pink/30"
-            />
-          </div>
-          {error ? (
-            <p className="font-dm text-xs text-red-600" role="alert">
-              {error}
-            </p>
-          ) : null}
+        <div className="mt-8 space-y-3">
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full min-h-[44px] rounded-full bg-eoi-ink py-3 font-dm text-sm font-semibold text-white disabled:opacity-60"
+            type="button"
+            onClick={() => void signInWithProvider("google")}
+            disabled={loadingProvider !== null}
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-eoi-border bg-white px-4 py-3 font-dm text-sm font-medium text-eoi-ink disabled:opacity-60"
           >
-            {loading ? t("login.signingIn") : t("login.submit")}
+            <Chrome size={18} strokeWidth={2} />
+            {loadingProvider === "google"
+              ? t("storeLogin.redirecting")
+              : t("storeLogin.continueWithGoogle")}
           </button>
-        </form>
+          <button
+            type="button"
+            onClick={() => void signInWithProvider("facebook")}
+            disabled={loadingProvider !== null}
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-eoi-border bg-white px-4 py-3 font-dm text-sm font-medium text-eoi-ink disabled:opacity-60"
+          >
+            <Facebook size={18} strokeWidth={2} />
+            {loadingProvider === "facebook"
+              ? t("storeLogin.redirecting")
+              : t("storeLogin.continueWithFacebook")}
+          </button>
+        </div>
+
+        {authFailed ? (
+          <p className="mt-4 font-dm text-xs text-red-600" role="alert">
+            {t("storeLogin.authFailed")}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="mt-2 font-dm text-xs text-red-600" role="alert">
+            {error}
+          </p>
+        ) : null}
       </div>
     </div>
   );

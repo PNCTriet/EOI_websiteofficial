@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useTranslations } from "@/components/locale-provider";
 import { useCart } from "@/components/cart/cart-context";
@@ -11,6 +12,44 @@ export function CartPageClient() {
   const t = useTranslations();
   const { locale } = useLocaleContext();
   const { items, mounted, subtotal, setLineQuantity, removeLine } = useCart();
+  const [invalidItems, setInvalidItems] = useState<
+    { productId: string; productName: string; reason: string }[]
+  >([]);
+  const [validating, setValidating] = useState(false);
+
+  const invalidMap = useMemo(() => {
+    return new Map(invalidItems.map((x) => [x.productId, x.reason]));
+  }, [invalidItems]);
+
+  useEffect(() => {
+    if (!mounted || items.length === 0) {
+      setInvalidItems([]);
+      return;
+    }
+    let cancelled = false;
+    setValidating(true);
+    void fetch("/api/cart/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: items.map((x) => ({
+          productId: x.productId,
+          quantity: x.quantity,
+        })),
+      }),
+    })
+      .then((r) => r.json())
+      .then((data: { invalid?: { productId: string; productName: string; reason: string }[] }) => {
+        if (cancelled) return;
+        setInvalidItems(data.invalid ?? []);
+      })
+      .finally(() => {
+        if (!cancelled) setValidating(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [items, mounted]);
 
   if (!mounted) {
     return (
@@ -81,6 +120,18 @@ export function CartPageClient() {
                   title={line.colorHex}
                 />
               </p>
+              {invalidMap.has(line.productId) ? (
+                <p className="mt-1 font-dm text-[11px] text-red-600">
+                  {t("store.cartInvalidPrefix")}{" "}
+                  {invalidMap.get(line.productId) === "coming_soon"
+                    ? t("store.availabilityComingSoon")
+                    : invalidMap.get(line.productId) === "out_of_stock"
+                      ? t("store.availabilityOutOfStock")
+                      : invalidMap.get(line.productId) === "no_price"
+                        ? t("store.priceNotSet")
+                        : t("common.error")}
+                </p>
+              ) : null}
               <p className="mt-1 font-syne text-sm font-extrabold text-eoi-ink">
                 {formatPrice(locale, line.price)}
               </p>
@@ -133,22 +184,30 @@ export function CartPageClient() {
       </ul>
 
       <div className="rounded-2xl border border-eoi-border bg-eoi-surface/80 p-4">
+        {invalidItems.length > 0 ? (
+          <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2">
+            <p className="font-dm text-xs font-medium text-red-700">
+              {t("store.cartInvalidTitle")}
+            </p>
+          </div>
+        ) : null}
         <div className="flex items-center justify-between font-dm text-sm">
           <span className="text-eoi-ink2">{t("store.subtotal")}</span>
           <span className="font-syne text-lg font-extrabold text-eoi-ink">
             {formatPrice(locale, subtotal)}
           </span>
         </div>
-        <button
-          type="button"
-          disabled
-          className="mt-4 w-full min-h-[48px] rounded-full bg-eoi-pink/50 py-3 font-dm text-sm font-semibold text-white"
+        <Link
+          href="/checkout"
+          aria-disabled={invalidItems.length > 0 || validating}
+          className={`mt-4 block w-full min-h-[48px] rounded-full py-3 text-center font-dm text-sm font-semibold text-white ${
+            invalidItems.length > 0 || validating
+              ? "pointer-events-none bg-eoi-pink/50"
+              : "bg-eoi-pink"
+          }`}
         >
           {t("store.checkout")}
-        </button>
-        <p className="mt-2 text-center font-dm text-[11px] text-eoi-ink2">
-          {t("store.checkoutSoon")}
-        </p>
+        </Link>
         <Link
           href="/"
           className="mt-3 block text-center font-dm text-sm font-medium text-eoi-ink underline-offset-2 hover:underline"

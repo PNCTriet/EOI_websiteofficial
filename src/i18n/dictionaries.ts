@@ -105,6 +105,9 @@ const vi = {
     priceNotSet: "Giá cập nhật sau",
     cannotAddToCartComingSoon: "Sản phẩm sắp mở bán — chưa thể thêm vào giỏ.",
     cannotAddToCartOutOfStock: "Sản phẩm tạm hết hàng.",
+    cartInvalidTitle:
+      "Giỏ hàng có sản phẩm không thể checkout. Vui lòng xóa hoặc chờ cập nhật.",
+    cartInvalidPrefix: "Không thể checkout:",
     categories: {
       all: "Tất cả",
       decor: "Decor",
@@ -142,6 +145,19 @@ const vi = {
     error: "Đăng nhập thất bại.",
     notAdminError:
       "Tài khoản chưa có quyền admin. Trong Supabase → Authentication → Users → chọn user → bật Raw User Meta Data hoặc App Metadata và thêm: \"role\": \"admin\" (JSON).",
+  },
+  storeLogin: {
+    title: "Đăng nhập để mua hàng",
+    subtitle: "Dùng tài khoản Google hoặc Facebook",
+    continueWithGoogle: "Tiếp tục với Google",
+    continueWithFacebook: "Tiếp tục với Facebook",
+    redirecting: "Đang chuyển hướng…",
+    authFailed: "Đăng nhập thất bại. Vui lòng thử lại.",
+  },
+  account: {
+    fullName: "Họ và tên",
+    phone: "Số điện thoại",
+    saved: "Đã lưu thông tin tài khoản.",
   },
   admin: {
     dashboard: {
@@ -203,6 +219,8 @@ const vi = {
       saveError: "Không lưu được.",
       fieldRequired: "Bắt buộc",
       invalidPrice: "Giá không hợp lệ",
+      invalidImageType: "Chỉ hỗ trợ file ảnh (image/*).",
+      imageTooLarge: "Ảnh vượt quá 5MB.",
       formTitleNew: "Thêm sản phẩm",
       formTitleEdit: "Chỉnh sửa sản phẩm",
       productNameField: "Tên sản phẩm",
@@ -424,6 +442,9 @@ const en: Messages = {
     priceNotSet: "Price TBA",
     cannotAddToCartComingSoon: "This product isn’t on sale yet — can’t add to cart.",
     cannotAddToCartOutOfStock: "This product is temporarily out of stock.",
+    cartInvalidTitle:
+      "Your cart has unavailable items. Remove them before checkout.",
+    cartInvalidPrefix: "Cannot checkout:",
     categories: {
       all: "All",
       decor: "Decor",
@@ -461,6 +482,19 @@ const en: Messages = {
     error: "Sign in failed.",
     notAdminError:
       "This account is not an admin. In Supabase → Authentication → Users → pick the user → Raw User Meta Data or App Metadata: add \"role\": \"admin\" (JSON).",
+  },
+  storeLogin: {
+    title: "Sign in to checkout",
+    subtitle: "Use your Google or Facebook account",
+    continueWithGoogle: "Continue with Google",
+    continueWithFacebook: "Continue with Facebook",
+    redirecting: "Redirecting…",
+    authFailed: "Sign in failed. Please try again.",
+  },
+  account: {
+    fullName: "Full name",
+    phone: "Phone",
+    saved: "Account profile saved.",
   },
   admin: {
     dashboard: {
@@ -522,6 +556,8 @@ const en: Messages = {
       saveError: "Could not save.",
       fieldRequired: "Required",
       invalidPrice: "Invalid price",
+      invalidImageType: "Only image files are allowed (image/*).",
+      imageTooLarge: "Image size must be 5MB or less.",
       formTitleNew: "Add product",
       formTitleEdit: "Edit product",
       productNameField: "Product name",

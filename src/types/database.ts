@@ -5,6 +5,7 @@ export type OrderStage =
   | "printing"
   | "shipped"
   | "delivered"
+  | "expired"
   | "cancelled";
 
 export type Json =
@@ -78,6 +79,105 @@ export type Database = {
         };
         Relationships: [];
       };
+      carts: {
+        Row: {
+          id: string;
+          user_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      cart_items: {
+        Row: {
+          id: string;
+          cart_id: string;
+          product_id: string;
+          quantity: number;
+          color_index: number;
+          color_hex: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          cart_id: string;
+          product_id: string;
+          quantity: number;
+          color_index?: number;
+          color_hex?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          cart_id?: string;
+          product_id?: string;
+          quantity?: number;
+          color_index?: number;
+          color_hex?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_cart_id_fkey";
+            columns: ["cart_id"];
+            isOneToOne: false;
+            referencedRelation: "carts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cart_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_profiles: {
+        Row: {
+          id: string;
+          full_name: string | null;
+          phone: string | null;
+          avatar_url: string | null;
+          default_address: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          full_name?: string | null;
+          phone?: string | null;
+          avatar_url?: string | null;
+          default_address?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          full_name?: string | null;
+          phone?: string | null;
+          avatar_url?: string | null;
+          default_address?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       customers: {
         Row: {
           id: string;
@@ -110,27 +210,42 @@ export type Database = {
           id: string;
           sepay_ref: string | null;
           customer_id: string | null;
+          user_id: string | null;
           total_amount: number;
           stage: OrderStage;
           paid_at: string | null;
+          expires_at: string | null;
+          payment_method: string;
+          shipping_addr: Json | null;
+          note: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           sepay_ref?: string | null;
           customer_id?: string | null;
+          user_id?: string | null;
           total_amount: number;
           stage?: OrderStage;
           paid_at?: string | null;
+          expires_at?: string | null;
+          payment_method?: string;
+          shipping_addr?: Json | null;
+          note?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           sepay_ref?: string | null;
           customer_id?: string | null;
+          user_id?: string | null;
           total_amount?: number;
           stage?: OrderStage;
           paid_at?: string | null;
+          expires_at?: string | null;
+          payment_method?: string;
+          shipping_addr?: Json | null;
+          note?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -139,6 +254,13 @@ export type Database = {
             columns: ["customer_id"];
             isOneToOne: false;
             referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "orders_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
             referencedColumns: ["id"];
           },
         ];

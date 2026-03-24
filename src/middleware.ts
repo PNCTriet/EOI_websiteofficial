@@ -25,18 +25,29 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAdmin = request.nextUrl.pathname.startsWith("/admin");
-  const isLogin = request.nextUrl.pathname === "/login";
+  const pathname = request.nextUrl.pathname;
+  const isAdminArea = pathname.startsWith("/admin");
+  const isAdminLogin = pathname === "/admin/login";
+  const isStoreLogin = pathname === "/login";
+  const isCheckout = pathname.startsWith("/checkout");
+  const isAccount = pathname.startsWith("/account");
 
-  if (isAdmin && !isUserAdmin(user)) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  if (isAdminArea && !isAdminLogin && !isUserAdmin(user)) {
+    return NextResponse.redirect(new URL("/admin/login", request.url));
   }
-  if (isLogin && isUserAdmin(user)) {
+  if (isAdminLogin && isUserAdmin(user)) {
     return NextResponse.redirect(new URL("/admin", request.url));
+  }
+  if ((isCheckout || isAccount) && !user) {
+    const next = encodeURIComponent(pathname);
+    return NextResponse.redirect(new URL(`/login?next=${next}`, request.url));
+  }
+  if (isStoreLogin && user && !isUserAdmin(user)) {
+    return NextResponse.redirect(new URL("/account", request.url));
   }
   return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login"],
+  matcher: ["/admin/:path*", "/login", "/checkout/:path*", "/account/:path*"],
 };

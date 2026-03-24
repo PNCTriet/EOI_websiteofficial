@@ -6,9 +6,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const STORAGE_KEY = "eoi_cart_v1";
 
@@ -50,6 +52,8 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartLine[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const syncTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     try {
@@ -74,6 +78,45 @@ export function CartProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
   }, [items, mounted]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let cancelled = false;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (!cancelled) setIsAuthenticated(Boolean(data.user));
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_evt, session) => {
+      setIsAuthenticated(Boolean(session?.user));
+    });
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !isAuthenticated) return;
+    if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = window.setTimeout(() => {
+      void fetch("/api/cart/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((x) => ({
+            productId: x.productId,
+            quantity: x.quantity,
+            colorIndex: x.colorIndex,
+            colorHex: x.colorHex,
+          })),
+        }),
+      });
+    }, 300);
+    return () => {
+      if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
+    };
+  }, [items, mounted, isAuthenticated]);
 
   const addItem = useCallback(
     (input: {
