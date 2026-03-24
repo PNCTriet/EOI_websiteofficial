@@ -66,19 +66,34 @@ export function CheckoutPendingClient({ orderId, sepayRef, totalAmount, expiresA
   const qrUrl = `https://img.vietqr.io/image/${bankCode}-${accountNo}-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(
     sepayRef
   )}&accountName=${encodeURIComponent(accountName)}`;
+  const progress = (() => {
+    if (stage === "pending_payment") return 1;
+    if (stage === "paid") return 2;
+    if (stage === "processing" || stage === "printing") return 3;
+    if (stage === "shipped" || stage === "delivered") return 4;
+    return 1;
+  })();
+  const checkpoints = [
+    { key: "payment", label: "Payment" },
+    { key: "processing", label: "Processing" },
+    { key: "delivery", label: "Delivery" },
+    { key: "finish", label: "Finish" },
+  ];
 
   return (
-    <div className="rounded-2xl border border-eoi-border bg-white p-5 shadow-sm">
-      <h1 className="font-syne text-xl font-bold text-eoi-ink">Cho thanh toan</h1>
-      <p className="mt-2 font-dm text-sm text-eoi-ink2">Ma don: {sepayRef}</p>
-      <p className="font-syne text-lg font-extrabold text-eoi-ink">
-        {formatPrice(locale, totalAmount)}
-      </p>
-      <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr]">
-        <div className="rounded-xl border border-eoi-border p-2">
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-eoi-border bg-white p-5 shadow-sm">
+        <h1 className="text-center font-syne text-xl font-bold text-eoi-ink">Cho thanh toan</h1>
+        <p className="mt-2 text-center font-dm text-sm text-eoi-ink2">Ma don: {sepayRef}</p>
+        <p className="text-center font-syne text-lg font-extrabold text-eoi-ink">
+          {formatPrice(locale, totalAmount)}
+        </p>
+
+        <div className="mx-auto mt-4 w-full max-w-[250px] rounded-xl border border-eoi-border p-2">
           <Image src={qrUrl} alt="QR payment" width={220} height={220} className="h-auto w-full" />
         </div>
-        <div className="space-y-2 font-dm text-sm text-eoi-ink2">
+
+        <div className="mx-auto mt-4 w-full max-w-md space-y-2 text-center font-dm text-sm text-eoi-ink2">
           <p>
             Ngan hang: <span className="font-semibold text-eoi-ink">VPBank</span>
           </p>
@@ -98,15 +113,45 @@ export function CheckoutPendingClient({ orderId, sepayRef, totalAmount, expiresA
             </span>
           </p>
         </div>
+
+        <div className="mt-5 text-center">
+          <Link
+            href="/account/orders"
+            className="inline-flex min-h-[44px] items-center rounded-full border border-eoi-border px-4 py-2 font-dm text-sm text-eoi-ink"
+          >
+            Xem don hang cua toi
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-4">
-        <Link
-          href="/account/orders"
-          className="inline-flex min-h-[44px] items-center rounded-full border border-eoi-border px-4 py-2 font-dm text-sm text-eoi-ink"
-        >
-          Xem don hang cua toi
-        </Link>
+      <div className="rounded-2xl border border-eoi-border bg-white p-5 shadow-sm">
+        <h2 className="text-center font-syne text-lg font-bold text-eoi-ink">Trang thai don hang</h2>
+        <div className="mt-5">
+          <div className="relative mx-auto max-w-2xl">
+            <div className="absolute left-0 right-0 top-3 h-1 rounded-full bg-eoi-border" />
+            <div
+              className="absolute left-0 top-3 h-1 rounded-full bg-eoi-pink transition-all"
+              style={{ width: `${((progress - 1) / (checkpoints.length - 1)) * 100}%` }}
+            />
+            <div className="relative grid grid-cols-4 gap-2">
+              {checkpoints.map((cp, idx) => {
+                const done = idx + 1 <= progress;
+                return (
+                  <div key={cp.key} className="text-center">
+                    <span
+                      className={`mx-auto block h-6 w-6 rounded-full border-2 ${
+                        done ? "border-eoi-pink bg-eoi-pink" : "border-eoi-border bg-white"
+                      }`}
+                    />
+                    <p className={`mt-2 font-dm text-xs ${done ? "text-eoi-ink" : "text-eoi-ink2"}`}>
+                      {cp.label}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
       {showSuccess ? (

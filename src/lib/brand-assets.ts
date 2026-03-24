@@ -1,6 +1,6 @@
 /** Asset paths under `public/` */
 export const brandAssets = {
-  logoTransparent: "/logo-transparent.png",
+  logoTransparent: "/image/logo/logo-transparent.png",
   /** Square mark — favicon-style contexts, avatars */
   logoAvatar: "/image/logo/logo-ava-alt1.PNG",
   faviconIco: "/image/logo/favicon.ico",
