@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   const supabase = createServiceClient();
   const amount = parseAmount(body);
   const content = String(body.content ?? body.description ?? "").toUpperCase();
-  const refMatch = content.match(/EOI-[A-Z0-9]{6}/);
+  const refMatch = content.match(/EOI-?([A-Z0-9]{6})/);
 
   const { data: log } = await supabase
     .from("sepay_logs")
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     .single();
 
   if (!refMatch || amount == null) return Response.json({ received: true, matched: false });
-  const ref = refMatch[0];
+  const ref = `EOI-${refMatch[1]}`;
 
   const { data: intent } = await supabase
     .from("payment_intents")
@@ -58,9 +58,41 @@ export async function POST(request: Request) {
     .eq("sepay_ref", ref)
     .eq("status", "pending")
     .maybeSingle();
-  if (!intent) return Response.json({ received: true, matched: false });
+  if (!intent) {
+    const { data: existingIntent } = await supabase
+      .from("payment_intents")
+      .select("id,status,order_id,amount")
+      .eq("sepay_ref", ref)
+      .maybeSingle();
+    if (!existingIntent) {
+      return Response.json({ received: true, matched: false, reason: "intent_not_found", ref });
+    }
+    if (existingIntent.status === "paid" && existingIntent.order_id) {
+      return Response.json({
+        received: true,
+        matched: true,
+        duplicate: true,
+        reason: "already_paid",
+        orderId: existingIntent.order_id,
+      });
+    }
+    return Response.json({
+      received: true,
+      matched: false,
+      reason: "intent_not_pending",
+      status: existingIntent.status,
+      ref,
+    });
+  }
   if (Math.abs(Number(intent.amount) - amount) > 1000) {
-    return Response.json({ received: true, matched: false, reason: "amount_mismatch" });
+    return Response.json({
+      received: true,
+      matched: false,
+      reason: "amount_mismatch",
+      expectedAmount: Number(intent.amount),
+      receivedAmount: amount,
+      ref,
+    });
   }
 
   const paidAt = new Date().toISOString();
