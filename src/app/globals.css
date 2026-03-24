@@ -96,6 +96,15 @@ body {
   overflow-x: auto;
   font-size: 12px;
 }
+.product-description iframe {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 220px;
+  border: 0;
+  border-radius: 10px;
+  margin: 0.6em 0;
+}
 
 /* TipTap admin editor */
 .tiptap-prose p {
@@ -112,4 +121,12 @@ body {
 .tiptap-prose a {
   color: var(--eoi-blue-dark);
   text-decoration: underline;
+}
+.tiptap-prose iframe {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 220px;
+  border: 0;
+  border-radius: 10px;
 }

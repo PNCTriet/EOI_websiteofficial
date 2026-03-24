@@ -4,12 +4,14 @@ import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+import Youtube from "@tiptap/extension-youtube";
 import {
   Bold,
   Italic,
   List,
   ListOrdered,
   Link2,
+  Video,
   Heading2,
   Redo2,
   Undo2,
@@ -27,6 +29,23 @@ function MenuBar({ editor }: { editor: Editor | null }) {
       return;
     }
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  };
+
+  const setVideo = () => {
+    const url = window.prompt(
+      "URL video (YouTube/Vimeo):",
+      "https://www.youtube.com/watch?v="
+    );
+    if (!url) return;
+    editor
+      .chain()
+      .focus()
+      .setYoutubeVideo({
+        src: url,
+        width: 640,
+        height: 360,
+      })
+      .run();
   };
 
   return (
@@ -73,6 +92,13 @@ function MenuBar({ editor }: { editor: Editor | null }) {
         label="Link"
       >
         <Link2 size={16} strokeWidth={2} />
+      </ToolbarBtn>
+      <ToolbarBtn
+        pressed={editor.isActive("youtube")}
+        onClick={setVideo}
+        label="Video"
+      >
+        <Video size={16} strokeWidth={2} />
       </ToolbarBtn>
       <span className="mx-0.5 w-px self-stretch bg-eoi-border" aria-hidden />
       <ToolbarBtn
@@ -145,6 +171,11 @@ export function ProductDescriptionEditor({
           target: "_blank",
           class: "text-eoi-blue-dark underline",
         },
+      }),
+      Youtube.configure({
+        controls: true,
+        modestBranding: true,
+        nocookie: true,
       }),
       Placeholder.configure({
         placeholder: placeholder ?? "",

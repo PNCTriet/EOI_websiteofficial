@@ -24,6 +24,7 @@ const SANITIZE_OPTS: sanitizeHtml.IOptions = {
     "div",
     "pre",
     "code",
+    "iframe",
   ],
   allowedAttributes: {
     a: ["href", "target", "rel", "class"],
@@ -33,9 +34,26 @@ const SANITIZE_OPTS: sanitizeHtml.IOptions = {
     code: ["class"],
     pre: ["class"],
     li: ["class"],
+    iframe: [
+      "src",
+      "title",
+      "width",
+      "height",
+      "allow",
+      "allowfullscreen",
+      "frameborder",
+      "loading",
+      "referrerpolicy",
+    ],
   },
   allowedSchemes: ["http", "https", "mailto"],
   allowProtocolRelative: false,
+  allowedIframeHostnames: [
+    "www.youtube.com",
+    "youtube.com",
+    "www.youtube-nocookie.com",
+    "player.vimeo.com",
+  ],
 };
 
 type Props = {

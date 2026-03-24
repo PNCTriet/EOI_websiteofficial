@@ -208,7 +208,7 @@ const vi = {
       productNameField: "Tên sản phẩm",
       priceDong: "Giá (đ)",
       descriptionEditorHint:
-        "Soạn thảo HTML: in đậm, tiêu đề, danh sách, link. Enter xuống dòng tạo đoạn mới.",
+        "Soạn thảo HTML: in đậm, tiêu đề, danh sách, link, video (YouTube/Vimeo). Enter xuống dòng tạo đoạn mới.",
       materialField: "Chất liệu / ghi chú (VD: PLA · nhiều màu)",
       categoryPreset: "Danh mục",
       categorySelectPlaceholder: "Chọn danh mục",
@@ -527,7 +527,7 @@ const en: Messages = {
       productNameField: "Product name",
       priceDong: "Price (VND)",
       descriptionEditorHint:
-        "Rich text: bold, headings, lists, links. Enter starts a new paragraph.",
+        "Rich text: bold, headings, lists, links, video (YouTube/Vimeo). Enter starts a new paragraph.",
       materialField: "Material / note (e.g. PLA · multi-color)",
       categoryPreset: "Category",
       categorySelectPlaceholder: "Select category",

@@ -266,6 +266,10 @@ export default function AdminProductFormPage() {
     );
   }
 
+  function removeImageAt(index: number) {
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
+  }
+
   if (loading) {
     return (
       <div className="animate-pulse p-5 md:p-6">
@@ -527,14 +531,23 @@ export default function AdminProductFormPage() {
             </p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
-            {imageUrls.map((url) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={url}
-                src={url}
-                alt=""
-                className="h-16 w-16 rounded-lg border border-eoi-border object-cover"
-              />
+            {imageUrls.map((url, i) => (
+              <div key={`${url}-${i}`} className="group relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt=""
+                  className="h-16 w-16 rounded-lg border border-eoi-border object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImageAt(i)}
+                  className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-red-600 shadow ring-1 ring-eoi-border"
+                  aria-label={`${t("admin.products.colorsRemove")} image ${i + 1}`}
+                >
+                  ×
+                </button>
+              </div>
             ))}
           </div>
         </div>
