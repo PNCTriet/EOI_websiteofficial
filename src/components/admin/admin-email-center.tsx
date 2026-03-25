@@ -59,7 +59,7 @@ export function AdminEmailCenter() {
         shipping_carrier: "GHTK",
         tracking_number: "GHTK123456789",
         recipient_name: "Linh",
-        site_url: "https://eoi.vn",
+        site_url: "https://eoilinhtinh.com",
       },
       null,
       2

@@ -114,9 +114,9 @@ Vào **Supabase Dashboard → Authentication → Providers**:
 
 ### Site URL & Redirect URLs
 ```
-Site URL: https://eoi.vn (production) / http://localhost:3000 (dev)
+Site URL: https://eoilinhtinh.com (production) / http://localhost:3000 (dev)
 Additional redirect URLs:
-  https://eoi.vn/auth/callback
+  https://eoilinhtinh.com/auth/callback
   http://localhost:3000/auth/callback
 ```
 

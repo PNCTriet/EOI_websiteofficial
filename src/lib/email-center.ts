@@ -43,7 +43,7 @@ export async function sendTemplatedEmail(input: {
 
   const subject = interpolate(tpl.subject, input.variables ?? {});
   const html = interpolate(tpl.html, input.variables ?? {});
-  const from = process.env.RESEND_FROM_EMAIL ?? "EOI <no-reply@eoi.vn>";
+  const from = process.env.RESEND_FROM_EMAIL ?? "EOI <no-reply@eoilinhtinh.com>";
 
   try {
     const resend = getResendClient();
