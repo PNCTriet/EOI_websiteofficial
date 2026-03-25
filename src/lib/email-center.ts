@@ -54,6 +54,28 @@ export async function sendTemplatedEmail(input: {
       html,
     });
 
+    const providerError =
+      typeof (result as { error?: unknown }).error === "object" &&
+      (result as { error?: { message?: string } }).error
+        ? (result as { error?: { message?: string } }).error
+        : null;
+    if (providerError) {
+      const detail = providerError.message?.trim() || "resend_error";
+      await supabase.from("email_logs").insert({
+        provider: "resend",
+        event_type: "failed",
+        status: "failed",
+        recipient_email: input.to,
+        subject,
+        template_key: input.templateKey,
+        order_id: input.orderId ?? null,
+        campaign_id: input.campaignId ?? null,
+        error: detail,
+        payload: result as unknown as Json,
+      });
+      return { ok: false as const, reason: "provider_error", detail };
+    }
+
     const providerMessageId = typeof result.data?.id === "string" ? result.data.id : null;
 
     await supabase.from("email_logs").insert({
@@ -71,6 +93,12 @@ export async function sendTemplatedEmail(input: {
 
     return { ok: true as const, providerMessageId };
   } catch (error) {
+    const detail =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : "unknown_error";
     await supabase.from("email_logs").insert({
       provider: "resend",
       event_type: "failed",
@@ -80,8 +108,9 @@ export async function sendTemplatedEmail(input: {
       template_key: input.templateKey,
       order_id: input.orderId ?? null,
       campaign_id: input.campaignId ?? null,
-      error: error instanceof Error ? error.message : "unknown_error",
+      error: detail,
+      payload: { error: detail } as unknown as Json,
     });
-    return { ok: false as const, reason: "send_failed" };
+    return { ok: false as const, reason: "send_failed", detail };
   }
 }

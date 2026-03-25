@@ -60,6 +60,7 @@ export async function POST(request: Request) {
 
   let sentCount = 0;
   let failedCount = 0;
+  const failedSamples: string[] = [];
   for (const email of recipients) {
     const res = await sendTemplatedEmail({
       to: email,
@@ -71,7 +72,13 @@ export async function POST(request: Request) {
       },
     });
     if (res.ok) sentCount += 1;
-    else failedCount += 1;
+    else {
+      failedCount += 1;
+      if (failedSamples.length < 5) {
+        const detail = "detail" in res && typeof res.detail === "string" ? res.detail : res.reason;
+        failedSamples.push(`${email}: ${detail}`);
+      }
+    }
   }
 
   await admin
@@ -82,7 +89,10 @@ export async function POST(request: Request) {
       sent_count: sentCount,
       failed_count: failedCount,
       sent_at: new Date().toISOString(),
-      last_error: failedCount > 0 ? `${failedCount} failed` : null,
+      last_error:
+        failedCount > 0
+          ? `${failedCount} failed. ${failedSamples.join(" | ")}`
+          : null,
     })
     .eq("id", campaign.id);
 
@@ -92,5 +102,6 @@ export async function POST(request: Request) {
     recipientCount: recipients.length,
     sentCount,
     failedCount,
+    failedSamples,
   });
 }

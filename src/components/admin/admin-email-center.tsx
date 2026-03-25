@@ -18,6 +18,7 @@ type Campaign = {
   recipient_count: number;
   sent_count: number;
   failed_count: number;
+  last_error?: string | null;
   sent_at: string | null;
   created_at: string;
 };
@@ -30,6 +31,7 @@ type EmailLog = {
   created_at: string;
   provider_message_id: string | null;
   event_type: string;
+  error?: string | null;
 };
 
 export function AdminEmailCenter() {
@@ -132,11 +134,18 @@ export function AdminEmailCenter() {
           .filter(Boolean),
       }),
     });
-    const data = (await res.json()) as { recipientCount?: number; sentCount?: number; failedCount?: number };
+    const data = (await res.json()) as {
+      recipientCount?: number;
+      sentCount?: number;
+      failedCount?: number;
+      failedSamples?: string[];
+    };
     setSending(false);
     if (res.ok) {
       setMessage(
-        `Campaign sent. Recipients: ${data.recipientCount ?? 0}, sent: ${data.sentCount ?? 0}, failed: ${data.failedCount ?? 0}.`
+        `Campaign sent. Recipients: ${data.recipientCount ?? 0}, sent: ${data.sentCount ?? 0}, failed: ${data.failedCount ?? 0}${
+          (data.failedSamples?.length ?? 0) > 0 ? `. Sample: ${data.failedSamples?.join(" | ")}` : ""
+        }.`
       );
       await loadDashboard();
     } else {
@@ -311,6 +320,7 @@ export function AdminEmailCenter() {
                   <p className="text-eoi-ink2">
                     {c.status} · {c.sent_count}/{c.recipient_count} sent · {c.failed_count} failed
                   </p>
+                  {c.last_error ? <p className="mt-1 text-red-600">{c.last_error}</p> : null}
                 </div>
               ))}
             </div>
@@ -330,6 +340,7 @@ export function AdminEmailCenter() {
                 <th className="py-2">Status</th>
                 <th className="py-2">Event</th>
                 <th className="py-2">Message ID</th>
+                <th className="py-2">Error</th>
               </tr>
             </thead>
             <tbody>
@@ -341,6 +352,7 @@ export function AdminEmailCenter() {
                   <td className="py-2">{l.status}</td>
                   <td className="py-2">{l.event_type}</td>
                   <td className="py-2">{l.provider_message_id ?? "—"}</td>
+                  <td className="py-2 text-red-600">{l.error ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

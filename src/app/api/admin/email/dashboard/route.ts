@@ -12,12 +12,12 @@ export async function GET() {
   const [{ data: logs }, { data: campaigns }] = await Promise.all([
     supabase
       .from("email_logs")
-      .select("id,status,recipient_email,subject,created_at,provider_message_id,event_type")
+      .select("id,status,recipient_email,subject,created_at,provider_message_id,event_type,error")
       .order("created_at", { ascending: false })
       .limit(50),
     supabase
       .from("email_campaigns")
-      .select("id,name,status,recipient_count,sent_count,failed_count,sent_at,created_at")
+      .select("id,name,status,recipient_count,sent_count,failed_count,last_error,sent_at,created_at")
       .order("created_at", { ascending: false })
       .limit(20),
   ]);
