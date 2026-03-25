@@ -92,9 +92,9 @@
 - [x] Trang public `/track` — tra đơn không cần login (nhập ref + email; RPC `track_order_by_ref_email`)
 
 ### 4.3 Thông báo
-- [ ] Email xác nhận đặt hàng (sau khi tạo order thành công)
-- [ ] Email xác nhận thanh toán (sau khi webhook paid)
-- [ ] Email thông báo đang giao (`shipped` + tracking number)
+- [x] Email xác nhận đặt hàng (sau khi tạo order thành công)
+- [x] Email xác nhận thanh toán (sau khi webhook paid)
+- [x] Email thông báo đang giao (`shipped` + tracking number)
 
 ---
 

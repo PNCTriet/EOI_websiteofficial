@@ -4,10 +4,20 @@ import type { Json } from "@/types/database";
 export async function POST(request: Request) {
   const body = (await request.json()) as {
     type?: string;
-    data?: { email_id?: string; to?: string | string[]; subject?: string };
+    data?: {
+      email_id?: string;
+      id?: string;
+      to?: string | string[];
+      subject?: string;
+      message_id?: string;
+    };
   };
 
-  const messageId = body.data?.email_id;
+  const messageId =
+    (typeof body.data?.email_id === "string" && body.data.email_id.trim()) ||
+    (typeof body.data?.id === "string" && body.data.id.trim()) ||
+    (typeof body.data?.message_id === "string" && body.data.message_id.trim());
+
   if (!messageId) return Response.json({ received: true });
 
   const eventType = (body.type ?? "").toLowerCase();
@@ -18,10 +28,14 @@ export async function POST(request: Request) {
         ? "opened"
         : eventType === "email.clicked"
           ? "clicked"
+          : eventType === "email.failed"
+            ? "failed"
           : eventType === "email.bounced"
             ? "bounced"
             : eventType === "email.complained"
               ? "complained"
+              : eventType === "email.error"
+                ? "failed"
               : "sent";
 
   const supabase = createServiceClient();

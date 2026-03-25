@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import type { Json } from "@/types/database";
 
 export type EmailTemplateKey =
+  | "order_created"
   | "order_paid"
   | "order_shipped"
   | "marketing_broadcast"
@@ -76,7 +77,12 @@ export async function sendTemplatedEmail(input: {
       return { ok: false as const, reason: "provider_error", detail };
     }
 
-    const providerMessageId = typeof result.data?.id === "string" ? result.data.id : null;
+    const providerMessageId =
+      (typeof (result as { data?: { id?: string } }).data?.id === "string"
+        ? (result as { data?: { id?: string } }).data?.id
+        : null) ??
+      (typeof (result as { id?: string }).id === "string" ? (result as { id?: string }).id : null) ??
+      null;
 
     await supabase.from("email_logs").insert({
       provider: "resend",

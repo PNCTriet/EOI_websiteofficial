@@ -2,6 +2,8 @@ import { createHmac } from "crypto";
 import { sendTemplatedEmail } from "@/lib/email-center";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Json } from "@/types/database";
+import { brandAssets } from "@/lib/brand-assets";
+import { formatShippingAddrLines, parseShippingAddr } from "@/lib/order-shipping";
 
 type PaymentWebhook = {
   amount?: number | string;
@@ -184,6 +186,26 @@ export async function POST(request: Request) {
   const shippingAddr = intent.shipping_addr as Record<string, unknown> | null;
   const email = typeof shippingAddr?.email === "string" ? shippingAddr.email.trim() : "";
   if (email) {
+    const addr = parseShippingAddr(intent.shipping_addr as Json | null);
+    const shipping_address = formatShippingAddrLines(addr, "vi");
+    const recipient_name = addr?.recipient_name?.trim() || email.split("@")[0] || "Customer";
+    const phone = addr?.phone?.trim() || "";
+
+    await sendTemplatedEmail({
+      to: email,
+      templateKey: "order_created",
+      orderId: order.id,
+      variables: {
+        order_ref: intent.sepay_ref ?? order.id,
+        order_total: Number(intent.amount),
+        recipient_name,
+        shipping_address,
+        phone,
+        site_url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+        logo_url: brandAssets.logoTransparent,
+      },
+    });
+
     await sendTemplatedEmail({
       to: email,
       templateKey: "order_paid",
