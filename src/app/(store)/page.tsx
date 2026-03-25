@@ -40,9 +40,14 @@ async function fetchProductsUncached(): Promise<ProductRow[]> {
     const first = await load(true);
     const firstError =
       typeof first.error === "object" && first.error
-        ? // supabase error has shape { message: string }
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (first.error as any).message
+        ? (() => {
+            const maybeMessage = (
+              first.error as { message?: unknown }
+            ).message;
+            return typeof maybeMessage === "string"
+              ? maybeMessage
+              : undefined;
+          })()
         : undefined;
 
     if (firstError) {

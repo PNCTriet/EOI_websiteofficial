@@ -47,10 +47,16 @@ async function getProduct(id: string): Promise<ProductRow | null> {
     if (!first.error && first.data) return first.data;
 
     // If thumbnail migration hasn't been applied yet, retry without `image_thumb_urls`.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const firstError =
       typeof first.error === "object" && first.error
-        ? (first.error as any).message
+        ? (() => {
+            const maybeMessage = (
+              first.error as { message?: unknown }
+            ).message;
+            return typeof maybeMessage === "string"
+              ? maybeMessage
+              : undefined;
+          })()
         : undefined;
 
     if (firstError && /image_thumb_urls/i.test(firstError)) {
