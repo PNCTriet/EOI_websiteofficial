@@ -346,7 +346,11 @@ export function AdminEmailCenter() {
             <tbody>
               {logs.map((l) => (
                 <tr key={l.id} className="border-b border-eoi-border/60">
-                  <td className="py-2">{new Date(l.created_at).toLocaleString()}</td>
+                  <td className="py-2">
+                    {new Date(l.created_at).toLocaleString(undefined, {
+                      timeZone: "Asia/Ho_Chi_Minh",
+                    })}
+                  </td>
                   <td className="py-2">{l.recipient_email}</td>
                   <td className="py-2">{l.subject}</td>
                   <td className="py-2">{l.status}</td>

@@ -22,5 +22,9 @@ export function formatDate(
 ): string {
   const tag = locale === "vi" ? "vi-VN" : "en-US";
   const d = new Date(iso);
-  return withTime ? d.toLocaleString(tag) : d.toLocaleDateString(tag);
+  // Supabase stores timestamptz in UTC; format for display in Vietnam time.
+  const timeZone = "Asia/Ho_Chi_Minh";
+  return withTime
+    ? d.toLocaleString(tag, { timeZone })
+    : d.toLocaleDateString(tag, { timeZone });
 }

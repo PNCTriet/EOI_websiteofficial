@@ -1,7 +1,7 @@
 # EOI — Payment Spec
 
 > Phương thức: SePay (trung gian nhận webhook chuyển khoản ngân hàng)
-> Flow: Tạo order → Hiển thị QR/thông tin CK → Polling/Webhook → Xác nhận
+> Flow: Tạo `payment_intents` → Hiển thị QR/thông tin CK → Polling/Webhook → Xác nhận
 
 ---
 
@@ -10,10 +10,10 @@
 ```
 User xác nhận đơn hàng
     ↓
-Server tạo order (stage: pending_payment)
-Sinh sepay_ref = "EOI-" + 6 ký tự random unique
+Server tạo payment intent (stage: pending)
+Sinh sepay_ref = "EOI-" + 6 ký tự random unique gắn với payment_intents
     ↓
-Redirect → /checkout/pending/[orderId]
+Redirect → /checkout/pending/[intentId]
     ↓
 Hiển thị:
   • QR code ngân hàng (STK + số tiền + nội dung CK)
@@ -21,13 +21,14 @@ Hiển thị:
   • Countdown timer 30 phút
     ↓
 Song song:
-  [Client] Polling GET /api/orders/[id]/status mỗi 5 giây
+  [Client] Polling GET /api/payment-intents/[id]/status mỗi 5 giây
   [Server] SePay POST /api/webhook/sepay khi có giao dịch khớp
     ↓
 Khi paid:
+  → Webhook tạo `orders` (stage: paid) và `payment_intents.order_id`
   → Redirect /checkout/success/[orderId]
 Khi hết 30 phút:
-  → Auto expire order (Edge Function)
+  → Auto expire pending payment_intents (Edge Function/Cron)
   → Redirect /checkout/failed?reason=expired
 ```
 
@@ -110,7 +111,7 @@ export async function generateUniqueRef(supabase): Promise<string> {
 
 ---
 
-## Server Action tạo order
+## Server Action tạo payment intent
 
 ```typescript
 // src/app/checkout/actions.ts
@@ -383,7 +384,9 @@ export async function POST(request: Request) {
         .eq('id', logEntry.id)
     }
 
-    // TODO Phase 4: trigger gửi email xác nhận thanh toán
+    // Email Center (Resend):
+    // - sendTemplatedEmail('order_created') + sendTemplatedEmail('order_paid')
+    //   ngay sau khi webhook tạo `orders` + `order_items` (src/app/api/webhook/payment/route.ts)
 
   } catch (err) {
     console.error('[webhook/sepay] error:', err)

@@ -176,7 +176,27 @@ Neu chua apply, mot so feature moi se loi do schema/policy chua cap nhat.
 
 ---
 
-## 9) Next phase (uu tien)
+---
+## 9) Email center (Resend) - Phase 4.3
+
+### Đã xong trong code
+- Quản lý template/campaign/log:
+  - `email_templates`, `email_campaigns`, `email_logs` (Supabase)
+- Admin UI: trang `/admin/emails`
+- Templates seed mặc định:
+  - `order_created` (tạo order sau webhook paid)
+  - `order_paid` (xác nhận thanh toán sau webhook paid)
+  - `order_shipped` (khi admin chuyển stage → shipped)
+  - `marketing_broadcast` (marketing campaign)
+- Gửi tự động:
+  - `POST /api/webhook/payment`: gửi `order_created` + `order_paid`
+  - `POST /api/admin/orders/[id]/stage`: nếu `to === shipped` thì gửi `order_shipped`
+- Theo dõi trạng thái qua Resend webhook:
+  - `POST /api/webhook/resend` cập nhật `email_logs`
+
+---
+
+## 10) Next phase (uu tien)
 
 1. Phase 4 - Order management (theo `order.md`).
 2. Phase 5 - SEO + Performance.

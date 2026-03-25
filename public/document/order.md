@@ -91,7 +91,7 @@ export const STAGE_COLORS: Record<OrderStage, { bg: string; text: string }> = {
 ## Admin — Server Action cập nhật stage
 
 ```typescript
-// src/app/(admin)/admin/orders/actions.ts
+// src/app/api/admin/orders/[id]/stage/route.ts
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
@@ -194,7 +194,7 @@ export async function updateOrderStage(
 ```typescript
 // Chỉ hiển thị dropdown với các option stage HỢP LỆ từ stage hiện tại
 // Nếu toStage === 'shipped': hiển thị thêm input tracking_number, shipping_carrier
-// Submit gọi server action updateOrderStage
+// Submit gọi POST /api/admin/orders/[id]/stage
 // Hiển thị error nếu transition không hợp lệ
 ```
 
@@ -378,30 +378,37 @@ Không cần login, tra theo mã đơn + email:
 ---
 
 ## Email notifications
+Hệ thống dùng **Resend** và quản lý template/campaign/log trong DB.
 
-Sử dụng **Resend** (resend.com) hoặc Supabase Edge Functions + email provider.
+### Template & dữ liệu
+- Bảng `email_templates`: quản lý HTML + subject theo `key`
+- Bảng `email_campaigns`: chiến dịch marketing (broadcast)
+- Bảng `email_logs`: log trạng thái gửi + event (delivered/opened/clicked/...)
 
-### Trigger gửi email
+Seed mặc định:
+- `order_created`: email xác nhận khi order được tạo (sau webhook paid)
+- `order_paid`: email xác nhận đã thanh toán (sau webhook paid)
+- `order_shipped`: email thông báo đang giao (khi admin chuyển stage → `shipped`)
+- `marketing_broadcast`: template marketing (admin có thể dùng làm campaign)
 
-| Sự kiện | Email gửi | Nội dung |
+### Trigger gửi email (auto)
+| Sự kiện | Email gửi | Nguồn |
 |---|---|---|
-| Order tạo thành công | user | Mã đơn, danh sách SP, tổng tiền, QR CK, hướng dẫn TT |
-| Stage → `paid` | user | Xác nhận đã nhận tiền, thời gian dự kiến giao |
-| Stage → `shipped` | user | Mã vận đơn, link theo dõi |
-| Stage → `cancelled` | user | Thông báo huỷ, lý do (nếu admin nhập) |
+| Webhook payment tạo `orders` (stage → `paid`) | `order_created` + `order_paid` | `POST /api/webhook/payment` |
+| Admin chuyển stage → `shipped` | `order_shipped` (cần carrier + tracking) | `POST /api/admin/orders/[id]/stage` |
 
-### Cách trigger
-```typescript
-// Sau khi update stage trong server action, gọi:
-await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/order-update`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ orderId, toStage, fromStage }),
-})
+### Marketing / campaign (manual)
+- Admin tạo campaign trong `/admin/emails`
+- API: `POST /api/admin/email/campaigns/send`
+- Audience:
+  - `all_customers`: lấy email từ `orders.shipping_addr`
+  - `paid_customers`: chỉ lấy từ `orders` có `paid_at`
+  - `custom`: admin nhập danh sách email
 
-// Hoặc dùng Supabase Database Webhooks:
-// Lắng nghe INSERT vào order_stage_logs → trigger Edge Function gửi email
-```
+### Theo dõi trạng thái email
+- Resend webhook: `POST /api/webhook/resend`
+- Hệ thống cập nhật `email_logs.status` + `event_type`
+- Admin xem trong `/admin/emails` (Email log + Recent campaigns)
 
 ---
 
