@@ -15,6 +15,8 @@ export function orderStageBadgeClass(stage: OrderStage): string {
       return "bg-green-100 text-green-700";
     case "cancelled":
       return "bg-red-100 text-red-700";
+    case "expired":
+      return "bg-amber-100 text-amber-900";
     default:
       return "bg-eoi-border text-eoi-ink2";
   }

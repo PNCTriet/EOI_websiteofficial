@@ -123,21 +123,41 @@ export async function POST(request: Request) {
     unit_price: number;
     product_name_snapshot: string | null;
   }> = [];
+
+  const productIds: string[] = [];
   for (const row of snapshot) {
     if (!row || typeof row !== "object") continue;
-    const data = row as { productId?: unknown; quantity?: unknown; price?: unknown; name?: unknown };
-    const productId = typeof data.productId === "string" ? data.productId : null;
-    const quantity = typeof data.quantity === "number" ? data.quantity : Number(data.quantity);
-    const unitPrice = typeof data.price === "number" ? data.price : Number(data.price);
-    const name = typeof data.name === "string" ? data.name : null;
-    if (!productId || !Number.isFinite(quantity) || !Number.isFinite(unitPrice) || quantity <= 0) continue;
-    orderItems.push({
-      order_id: order.id,
-      product_id: productId,
-      quantity,
-      unit_price: unitPrice,
-      product_name_snapshot: name,
-    });
+    const data = row as { productId?: unknown; quantity?: unknown };
+    const pid = typeof data.productId === "string" ? data.productId : null;
+    if (pid) productIds.push(pid);
+  }
+  const uniqueIds = [...new Set(productIds)];
+  if (uniqueIds.length > 0) {
+    const { data: productRows } = await supabase
+      .from("products")
+      .select("id,name,price")
+      .in("id", uniqueIds);
+    const productMap = new Map((productRows ?? []).map((p) => [p.id, p]));
+
+    for (const row of snapshot) {
+      if (!row || typeof row !== "object") continue;
+      const data = row as { productId?: unknown; quantity?: unknown; price?: unknown; name?: unknown };
+      const productId = typeof data.productId === "string" ? data.productId : null;
+      const quantity = typeof data.quantity === "number" ? data.quantity : Number(data.quantity);
+      if (!productId || !Number.isFinite(quantity) || quantity <= 0) continue;
+      const prod = productMap.get(productId);
+      if (!prod || prod.price == null) continue;
+      const fromSnapshotPrice =
+        typeof data.price === "number" && Number.isFinite(data.price) ? data.price : null;
+      const fromSnapshotName = typeof data.name === "string" ? data.name : null;
+      orderItems.push({
+        order_id: order.id,
+        product_id: productId,
+        quantity: Math.floor(quantity),
+        unit_price: fromSnapshotPrice ?? prod.price,
+        product_name_snapshot: fromSnapshotName ?? prod.name,
+      });
+    }
   }
 
   if (orderItems.length > 0) {
