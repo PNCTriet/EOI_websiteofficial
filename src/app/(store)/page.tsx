@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Plus } from "lucide-react";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { CategoryChips } from "@/components/category-chips";
 import { badgeLabel } from "@/i18n/badge-label";
@@ -15,7 +16,7 @@ import {
 import { PLACEHOLDER_PRODUCTS } from "@/lib/placeholder-products";
 import type { ProductRow } from "@/types/database";
 
-async function fetchProducts(): Promise<ProductRow[]> {
+async function fetchProductsUncached(): Promise<ProductRow[]> {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -34,6 +35,11 @@ async function fetchProducts(): Promise<ProductRow[]> {
     return PLACEHOLDER_PRODUCTS;
   }
 }
+
+const fetchProducts = unstable_cache(fetchProductsUncached, ["active-products"], {
+  // 1 giờ
+  revalidate: 60 * 60,
+});
 
 function badgeStyles(badge: string | null): string {
   if (!badge) return "hidden";

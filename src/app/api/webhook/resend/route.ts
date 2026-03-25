@@ -1,7 +1,11 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Json } from "@/types/database";
+import { logEvent } from "@/lib/logging";
 
 export async function POST(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown";
   const body = (await request.json()) as {
     type?: string;
     data?: {
@@ -48,5 +52,6 @@ export async function POST(request: Request) {
     })
     .eq("provider_message_id", messageId);
 
+  logEvent("webhook.resend.updated", { ip, messageId, eventType, status });
   return Response.json({ received: true });
 }

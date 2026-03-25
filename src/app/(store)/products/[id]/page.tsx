@@ -16,6 +16,7 @@ import { getLocale } from "@/lib/locale";
 import { PLACEHOLDER_PRODUCTS } from "@/lib/placeholder-products";
 import { storeCategoryLabel } from "@/lib/product-taxonomy";
 import type { ProductRow } from "@/types/database";
+import { brandAssets } from "@/lib/brand-assets";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -58,8 +59,59 @@ export default async function ProductDetailPage({ params }: Props) {
     ? product.availability
     : defaultAvailability();
 
+  const origin = (() => {
+    const raw =
+      process.env.NEXT_PUBLIC_SITE_URL ??
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+    try {
+      return new URL(raw ?? "http://localhost:3000").origin;
+    } catch {
+      return "http://localhost:3000";
+    }
+  })();
+
+  const firstImage = product.image_urls?.[0] ?? brandAssets.ogImage;
+  const schemaAvailability =
+    availability === "in_stock"
+      ? "https://schema.org/InStock"
+      : availability === "coming_soon"
+        ? "https://schema.org/PreOrder"
+        : "https://schema.org/OutOfStock";
+
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    image: [firstImage],
+    description: product.description ?? defaultDesc,
+    brand: { "@type": "Brand", name: "EOI" },
+    sku: product.id,
+    category: product.category ?? undefined,
+    offers:
+      product.price != null
+        ? {
+            "@type": "Offer",
+            priceCurrency: "VND",
+            price: product.price,
+            availability: schemaAvailability,
+            url: `${origin}/products/${product.id}`,
+          }
+        : {
+            "@type": "Offer",
+            availability: schemaAvailability,
+            url: `${origin}/products/${product.id}`,
+          },
+  };
+
   return (
     <div className="px-5 pb-10 pt-2 md:px-6">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd),
+        }}
+      />
       <div className="relative mx-auto max-w-lg">
         <Link
           href="/"

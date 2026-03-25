@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import type { Json } from "@/types/database";
 import { brandAssets } from "@/lib/brand-assets";
 import { formatShippingAddrLines, parseShippingAddr } from "@/lib/order-shipping";
+import { logEvent } from "@/lib/logging";
 
 type PaymentWebhook = {
   amount?: number | string;
@@ -20,12 +21,16 @@ function parseAmount(v: PaymentWebhook): number | null {
 }
 
 export async function POST(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown";
   const rawBody = await request.text();
   const signature = request.headers.get("x-payment-signature");
   const secret = process.env.PAYMENT_WEBHOOK_SECRET;
   if (secret) {
     const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
     if (!signature || signature !== expected) {
+      logEvent("webhook.payment.invalid_signature", { ip });
       return Response.json({ error: "Invalid signature" }, { status: 401 });
     }
   }
@@ -34,8 +39,10 @@ export async function POST(request: Request) {
   try {
     body = JSON.parse(rawBody) as PaymentWebhook;
   } catch {
+    logEvent("webhook.payment.bad_json", { ip });
     return Response.json({ received: true });
   }
+  logEvent("webhook.payment.received", { ip });
 
   const supabase = createServiceClient();
   const amount = parseAmount(body);
@@ -52,7 +59,10 @@ export async function POST(request: Request) {
     .select("id")
     .single();
 
-  if (!refMatch || amount == null) return Response.json({ received: true, matched: false });
+  if (!refMatch || amount == null) {
+    logEvent("webhook.payment.no_ref_or_amount", { ip });
+    return Response.json({ received: true, matched: false });
+  }
   const ref = `EOI-${refMatch[1]}`;
 
   const { data: intent } = await supabase
@@ -68,9 +78,11 @@ export async function POST(request: Request) {
       .eq("sepay_ref", ref)
       .maybeSingle();
     if (!existingIntent) {
+      logEvent("webhook.payment.intent_not_found", { ip, ref });
       return Response.json({ received: true, matched: false, reason: "intent_not_found", ref });
     }
     if (existingIntent.status === "paid" && existingIntent.order_id) {
+      logEvent("webhook.payment.already_paid", { ip, ref, orderId: existingIntent.order_id });
       return Response.json({
         received: true,
         matched: true,
@@ -79,6 +91,7 @@ export async function POST(request: Request) {
         orderId: existingIntent.order_id,
       });
     }
+    logEvent("webhook.payment.intent_not_pending", { ip, ref, status: existingIntent.status });
     return Response.json({
       received: true,
       matched: false,
@@ -88,6 +101,12 @@ export async function POST(request: Request) {
     });
   }
   if (Math.abs(Number(intent.amount) - amount) > 1000) {
+    logEvent("webhook.payment.amount_mismatch", {
+      ip,
+      ref,
+      expectedAmount: Number(intent.amount),
+      receivedAmount: amount,
+    });
     return Response.json({
       received: true,
       matched: false,
@@ -115,6 +134,7 @@ export async function POST(request: Request) {
     .select("id")
     .single();
   if (orderErr || !order) {
+    logEvent("webhook.payment.order_create_failed", { ip, ref });
     return Response.json({ received: true, matched: false, reason: "order_create_failed" });
   }
 
@@ -166,6 +186,7 @@ export async function POST(request: Request) {
   if (orderItems.length > 0) {
     const { error: itemErr } = await supabase.from("order_items").insert(orderItems);
     if (itemErr) {
+      logEvent("webhook.payment.order_items_create_failed", { ip, ref });
       return Response.json({ received: true, matched: false, reason: "order_items_create_failed" });
     }
   }
@@ -216,5 +237,6 @@ export async function POST(request: Request) {
       },
     });
   }
+  logEvent("webhook.payment.matched", { ip, ref, orderId: order.id });
   return Response.json({ received: true, matched: true, orderId: order.id });
 }

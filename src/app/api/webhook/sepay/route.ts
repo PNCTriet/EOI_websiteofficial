@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database, Json, OrderRow } from "@/types/database";
+import { logEvent } from "@/lib/logging";
+import { makeRateLimit } from "@/lib/rate-limit";
 
 type SePayBody = {
   transferAmount?: number;
@@ -20,16 +22,31 @@ function parseAmount(body: SePayBody): number | null {
 }
 
 export async function POST(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown";
+  const rateLimit = makeRateLimit({ windowMs: 60_000, max: 20 });
+  const rl = rateLimit(`sepay:${ip}`);
+  if (!rl.allowed) {
+    logEvent("rate_limited.webhook_sepay", { ip, retryAfterSeconds: rl.retryAfterSeconds });
+    return new Response(JSON.stringify({ success: false }), {
+      status: 429,
+      headers: { "Retry-After": String(rl.retryAfterSeconds) },
+    });
+  }
+
   let body: SePayBody;
   try {
     body = (await request.json()) as SePayBody;
   } catch {
+    logEvent("webhook_sepay.bad_json", { ip });
     return Response.json({ success: true });
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
+    logEvent("webhook_sepay.missing_supabase_service_role");
     return Response.json({ success: true });
   }
 
