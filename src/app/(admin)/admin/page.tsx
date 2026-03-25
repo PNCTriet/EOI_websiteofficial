@@ -7,9 +7,10 @@ import {
 import { OrderStageBadge } from "@/components/admin/order-stage-badge";
 import { t } from "@/i18n/translate";
 import { createClient } from "@/lib/supabase/server";
+import { orderCustomerDisplayName } from "@/lib/order-customer-display";
 import { formatDate, formatPrice } from "@/lib/format-locale";
 import { getServerI18n } from "@/lib/server-i18n";
-import type { OrderStage } from "@/types/database";
+import type { Json, OrderStage } from "@/types/database";
 
 type RecentOrder = {
   id: string;
@@ -17,7 +18,9 @@ type RecentOrder = {
   total_amount: number;
   stage: OrderStage;
   created_at: string;
-  customers: { name: string; email: string | null } | null;
+  user_id: string | null;
+  shipping_addr: Json | null;
+  customers: { name: string } | null;
 };
 
 function startOfMonthIso(): string {
@@ -42,6 +45,7 @@ export default async function AdminDashboardPage() {
   let pendingPayment = 0;
   let printing = 0;
   let recent: RecentOrder[] = [];
+  let profileMap = new Map<string, { full_name: string | null }>();
 
   try {
     const { count: c1 } = await supabase
@@ -77,11 +81,20 @@ export default async function AdminDashboardPage() {
     const { data: ord } = await supabase
       .from("orders")
       .select(
-        "id, sepay_ref, total_amount, stage, created_at, customers ( name, email )"
+        "id, sepay_ref, total_amount, stage, created_at, user_id, shipping_addr, customers ( name )"
       )
       .order("created_at", { ascending: false })
       .limit(10);
     recent = (ord as RecentOrder[] | null) ?? [];
+
+    const userIds = [...new Set(recent.map((o) => o.user_id).filter(Boolean))] as string[];
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("user_profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+      profileMap = new Map((profiles ?? []).map((p) => [p.id, { full_name: p.full_name }]));
+    }
   } catch {
     /* tables may not exist yet */
   }
@@ -183,7 +196,11 @@ export default async function AdminDashboardPage() {
                       {o.sepay_ref ?? o.id.slice(0, 8)}
                     </td>
                     <td className="px-4 py-3 text-eoi-ink2">
-                      {o.customers?.name ?? tr("common.dash")}
+                      {orderCustomerDisplayName(
+                        o.shipping_addr,
+                        o.customers?.name ?? null,
+                        o.user_id ? profileMap.get(o.user_id)?.full_name ?? null : null
+                      ) || tr("common.dash")}
                     </td>
                     <td className="px-4 py-3 font-medium text-eoi-ink">
                       {formatPrice(locale, o.total_amount)}

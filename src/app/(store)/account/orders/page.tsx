@@ -7,6 +7,7 @@ import type { OrderStage } from "@/types/database";
 
 type TabKey = "all" | "active" | "delivered" | "closed";
 
+/** Đơn hết hạn thanh toán không hiển thị cho khách (gọn danh sách). */
 function tabFilter(tab: TabKey, stage: OrderStage): boolean {
   switch (tab) {
     case "all":
@@ -22,7 +23,7 @@ function tabFilter(tab: TabKey, stage: OrderStage): boolean {
     case "delivered":
       return stage === "delivered";
     case "closed":
-      return stage === "cancelled" || stage === "expired";
+      return stage === "cancelled";
     default:
       return true;
   }
@@ -50,7 +51,7 @@ export default async function AccountOrdersPage({ searchParams }: Props) {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  const orders = data ?? [];
+  const orders = (data ?? []).filter((o) => (o.stage as OrderStage) !== "expired");
   const filtered = orders.filter((o) => tabFilter(tab, o.stage as OrderStage));
 
   const tabs: { key: TabKey; labelKey: string }[] = [

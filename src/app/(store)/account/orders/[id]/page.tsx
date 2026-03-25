@@ -28,6 +28,7 @@ export default async function AccountOrderDetailPage({ params }: Props) {
   if (!order) notFound();
 
   const stage = order.stage as OrderStage;
+  if (stage === "expired") notFound();
 
   const { data: items } = await supabase
     .from("order_items")
@@ -35,7 +36,7 @@ export default async function AccountOrderDetailPage({ params }: Props) {
     .eq("order_id", order.id);
 
   const progress = userPhaseProgress(stage);
-  const isClosed = stage === "cancelled" || stage === "expired";
+  const isClosed = stage === "cancelled";
 
   const checkpoints = [
     { key: "payment", label: t(messages, "store.orderTrackingPayment") },
@@ -73,16 +74,8 @@ export default async function AccountOrderDetailPage({ params }: Props) {
       </p>
 
       {isClosed ? (
-        <div
-          className={`mt-4 rounded-xl border px-3 py-3 font-dm text-sm ${
-            stage === "expired"
-              ? "border-amber-200 bg-amber-50 text-amber-900"
-              : "border-red-200 bg-red-50 text-red-900"
-          }`}
-        >
-          {stage === "expired"
-            ? t(messages, "store.orderBannerExpired")
-            : t(messages, "store.orderBannerCancelled")}
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-3 font-dm text-sm text-red-900">
+          {t(messages, "store.orderBannerCancelled")}
         </div>
       ) : (
         <div className="mt-4 rounded-xl border border-eoi-border bg-eoi-surface/50 p-4">
