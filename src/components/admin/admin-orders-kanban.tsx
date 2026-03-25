@@ -40,7 +40,7 @@ export function AdminOrdersKanban({ orders, locale, messages }: Props) {
   const tr = (path: string, vars?: Record<string, string>) => t(messages, path, vars);
 
   return (
-    <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
+    <div className="mt-4 flex gap-3 overflow-x-auto overscroll-x-contain pb-2 pt-0.5 [-webkit-overflow-scrolling:touch] sm:mt-6">
       {COLUMNS.map((col) => {
         const colOrders = orders.filter((o) => col.stages.includes(o.stage));
         return (

@@ -25,21 +25,21 @@ export default async function AdminProductsPage() {
   }
 
   return (
-    <div className="p-5 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-syne text-2xl font-bold tracking-[-0.5px] text-eoi-ink">
+    <div className="min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <h1 className="font-syne text-xl font-bold tracking-[-0.5px] text-eoi-ink sm:text-2xl">
           {tr("admin.products.title")}
         </h1>
         <Link
           href="/admin/products/new"
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-eoi-pink px-4 py-2.5 font-dm text-sm font-semibold text-white"
+          className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-eoi-pink px-4 py-2.5 font-dm text-sm font-semibold text-white sm:w-auto"
         >
           <Plus size={18} strokeWidth={2} aria-hidden />
           {tr("admin.products.addNew")}
         </Link>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-eoi-border bg-white shadow-sm">
+      <div className="mt-4 overflow-x-auto overscroll-x-contain rounded-2xl border border-eoi-border bg-white shadow-sm sm:mt-6">
         <table className="w-full min-w-[820px] text-left font-dm text-sm">
           <thead>
             <tr className="border-b border-eoi-border bg-eoi-surface/80">

@@ -282,7 +282,7 @@ export default function AdminProductFormPage() {
 
   if (loading) {
     return (
-      <div className="animate-pulse p-5 md:p-6">
+      <div className="animate-pulse min-w-0">
         <div className="h-8 w-48 rounded bg-eoi-border" />
         <div className="mt-6 space-y-4">
           <div className="h-12 rounded-[10px] bg-eoi-border" />
@@ -297,14 +297,14 @@ export default function AdminProductFormPage() {
     "mt-1 w-full rounded-[10px] border border-eoi-border bg-white px-3 py-3 font-dm text-sm text-eoi-ink outline-none focus:ring-2 focus:ring-eoi-pink/30";
 
   return (
-    <div className="p-5 md:p-6">
-      <h1 className="font-syne text-2xl font-bold tracking-[-0.5px] text-eoi-ink">
+    <div className="min-w-0">
+      <h1 className="font-syne text-xl font-bold tracking-[-0.5px] text-eoi-ink sm:text-2xl">
         {isNew ? t("admin.products.formTitleNew") : t("admin.products.formTitleEdit")}
       </h1>
 
       <form
         onSubmit={handleSubmit}
-        className="mx-auto mt-6 max-w-xl space-y-5 rounded-2xl border border-eoi-border bg-white p-5 shadow-sm"
+        className="mx-auto mt-4 max-w-xl space-y-5 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm sm:mt-6 sm:p-5"
       >
         <div>
           <label className="font-dm text-xs font-medium text-eoi-ink2">

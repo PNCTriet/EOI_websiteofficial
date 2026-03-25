@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import { t } from "@/i18n/translate";
 import { formatDate, formatPrice } from "@/lib/format-locale";
+import { formatShippingAddrLines, parseShippingAddr } from "@/lib/order-shipping";
 import { createClient } from "@/lib/supabase/server";
 import { getServerI18n } from "@/lib/server-i18n";
 import { userPhaseProgress } from "@/lib/order-user-phase";
-import type { OrderStage } from "@/types/database";
+import type { Json, OrderStage } from "@/types/database";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -20,7 +21,9 @@ export default async function AccountOrderDetailPage({ params }: Props) {
 
   const { data: order } = await supabase
     .from("orders")
-    .select("id,sepay_ref,total_amount,stage,created_at,paid_at")
+    .select(
+      "id,sepay_ref,total_amount,stage,created_at,paid_at,shipping_addr,tracking_number,shipping_carrier"
+    )
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -35,8 +38,19 @@ export default async function AccountOrderDetailPage({ params }: Props) {
     .select("id,product_name_snapshot,quantity,unit_price")
     .eq("order_id", order.id);
 
+  const { data: logsRaw } = await supabase
+    .from("order_stage_logs")
+    .select("id,from_stage,to_stage,created_at")
+    .eq("order_id", order.id)
+    .order("created_at", { ascending: true });
+
+  const logs = logsRaw ?? [];
+
   const progress = userPhaseProgress(stage);
   const isClosed = stage === "cancelled";
+
+  const addr = parseShippingAddr(order.shipping_addr as Json | null);
+  const addressText = formatShippingAddrLines(addr, locale);
 
   const checkpoints = [
     { key: "payment", label: t(messages, "store.orderTrackingPayment") },
@@ -115,6 +129,58 @@ export default async function AccountOrderDetailPage({ params }: Props) {
           ) : null}
         </div>
       )}
+
+      {addressText ? (
+        <div className="mt-4 rounded-xl border border-eoi-border bg-white px-3 py-3">
+          <p className="font-dm text-xs font-semibold uppercase text-eoi-ink2">
+            {t(messages, "store.orderShippingAddress")}
+          </p>
+          <p className="mt-1 whitespace-pre-wrap font-dm text-sm text-eoi-ink">{addressText}</p>
+          {addr?.recipient_name ? (
+            <p className="mt-2 font-dm text-xs text-eoi-ink2">
+              {addr.recipient_name}
+              {addr.phone ? ` · ${addr.phone}` : ""}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {order.tracking_number || order.shipping_carrier ? (
+        <div className="mt-4 rounded-xl border border-eoi-border bg-eoi-surface/50 px-3 py-3 font-dm text-sm">
+          <p>
+            <span className="text-eoi-ink2">{t(messages, "store.trackCarrier")}: </span>
+            <span className="text-eoi-ink">{order.shipping_carrier?.trim() || "—"}</span>
+          </p>
+          <p className="mt-1">
+            <span className="text-eoi-ink2">{t(messages, "store.trackTracking")}: </span>
+            <span className="text-eoi-ink">{order.tracking_number?.trim() || "—"}</span>
+          </p>
+        </div>
+      ) : null}
+
+      {logs.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-eoi-border bg-white px-3 py-3">
+          <p className="font-dm text-xs font-semibold uppercase text-eoi-ink2">
+            {t(messages, "store.orderStatusHistory")}
+          </p>
+          <ul className="mt-2 space-y-2 font-dm text-sm text-eoi-ink">
+            {logs.map((log) => {
+              const fromLabel = log.from_stage
+                ? t(messages, `stages.${log.from_stage as OrderStage}`)
+                : "—";
+              const toLabel = t(messages, `stages.${log.to_stage as OrderStage}`);
+              return (
+                <li key={log.id} className="flex flex-wrap gap-x-2 border-b border-eoi-border/60 pb-2 last:border-0">
+                  <span className="text-eoi-ink2">{formatDate(locale, log.created_at, true)}</span>
+                  <span>
+                    {fromLabel} → {toLabel}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="mt-4 space-y-2">
         {(items ?? []).map((it) => (

@@ -94,7 +94,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   const ref = order.sepay_ref ?? order.id.slice(0, 8);
 
   return (
-    <div className="p-5 md:p-6">
+    <div className="min-w-0">
       <Link
         href="/admin/orders"
         className="inline-flex min-h-[44px] items-center gap-1 font-dm text-sm font-medium text-eoi-ink2 hover:text-eoi-ink"
@@ -103,14 +103,14 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         {tr("admin.orders.backToList")}
       </Link>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <h1 className="font-syne text-2xl font-bold tracking-[-0.5px] text-eoi-ink">
+      <div className="mt-1 flex flex-wrap items-center gap-3">
+        <h1 className="font-syne text-xl font-bold tracking-[-0.5px] text-eoi-ink sm:text-2xl">
           {tr("admin.orders.detailTitle", { ref })}
         </h1>
         <OrderStageBadge stage={order.stage} />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
           <h2 className="font-syne text-sm font-bold text-eoi-ink">{tr("admin.orders.customer")}</h2>
           <dl className="mt-3 space-y-2 font-dm text-sm text-eoi-ink2">
@@ -146,9 +146,25 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         />
       </div>
 
+      {order.tracking_number || order.shipping_carrier ? (
+        <div className="mt-4 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+          <h2 className="font-syne text-sm font-bold text-eoi-ink">{tr("admin.orders.shippingTracking")}</h2>
+          <dl className="mt-2 grid gap-2 font-dm text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-xs uppercase text-eoi-ink2">{tr("admin.orders.shippingCarrier")}</dt>
+              <dd className="text-eoi-ink">{order.shipping_carrier?.trim() || tr("common.dash")}</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase text-eoi-ink2">{tr("admin.orders.trackingNumber")}</dt>
+              <dd className="text-eoi-ink">{order.tracking_number?.trim() || tr("common.dash")}</dd>
+            </div>
+          </dl>
+        </div>
+      ) : null}
+
       <div className="mt-6 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
         <h2 className="font-syne text-sm font-bold text-eoi-ink">{tr("admin.orders.items")}</h2>
-        <div className="mt-3 overflow-x-auto">
+        <div className="mt-3 overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[480px] text-left font-dm text-sm">
             <thead>
               <tr className="border-b border-eoi-border">

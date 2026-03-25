@@ -1,4 +1,9 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
+
+/** Cố định root = thư mục chứa file này (tránh Next infer sai khi có lockfile ở thư mục cha → MODULE_NOT_FOUND / HMR lỗi). */
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const supabaseHost = (() => {
   const raw = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,6 +16,7 @@ const supabaseHost = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: projectRoot,
   images: {
     remotePatterns: [
       {

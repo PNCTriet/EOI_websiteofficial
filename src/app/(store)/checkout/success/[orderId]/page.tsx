@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ClearCartOnCheckoutSuccess } from "@/components/cart/clear-cart-on-checkout-success";
 import { formatPrice } from "@/lib/format-locale";
 import { createClient } from "@/lib/supabase/server";
 import { getServerI18n } from "@/lib/server-i18n";
@@ -25,6 +26,7 @@ export default async function CheckoutSuccessPage({ params }: Props) {
 
   return (
     <div className="px-5 py-8 md:px-6">
+      <ClearCartOnCheckoutSuccess />
       <div className="mx-auto max-w-xl rounded-2xl border border-eoi-border bg-white p-6 text-center shadow-sm">
         <h1 className="font-syne text-2xl font-bold text-eoi-ink">Payment successful</h1>
         <p className="mt-2 font-dm text-sm text-eoi-ink2">

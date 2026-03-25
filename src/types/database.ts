@@ -272,6 +272,8 @@ export type Database = {
           shipping_addr: Json | null;
           note: string | null;
           created_at: string;
+          tracking_number: string | null;
+          shipping_carrier: string | null;
         };
         Insert: {
           id?: string;
@@ -286,6 +288,8 @@ export type Database = {
           shipping_addr?: Json | null;
           note?: string | null;
           created_at?: string;
+          tracking_number?: string | null;
+          shipping_carrier?: string | null;
         };
         Update: {
           id?: string;
@@ -300,6 +304,8 @@ export type Database = {
           shipping_addr?: Json | null;
           note?: string | null;
           created_at?: string;
+          tracking_number?: string | null;
+          shipping_carrier?: string | null;
         };
         Relationships: [
           {
@@ -419,9 +425,159 @@ export type Database = {
         };
         Relationships: [];
       };
+      email_templates: {
+        Row: {
+          key: string;
+          name: string;
+          subject: string;
+          html: string;
+          enabled: boolean;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          name: string;
+          subject: string;
+          html: string;
+          enabled?: boolean;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          name?: string;
+          subject?: string;
+          html?: string;
+          enabled?: boolean;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      email_campaigns: {
+        Row: {
+          id: string;
+          name: string;
+          template_key: string | null;
+          audience: string;
+          custom_recipients: string[];
+          status: string;
+          recipient_count: number;
+          sent_count: number;
+          failed_count: number;
+          last_error: string | null;
+          sent_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          template_key?: string | null;
+          audience?: string;
+          custom_recipients?: string[];
+          status?: string;
+          recipient_count?: number;
+          sent_count?: number;
+          failed_count?: number;
+          last_error?: string | null;
+          sent_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          template_key?: string | null;
+          audience?: string;
+          custom_recipients?: string[];
+          status?: string;
+          recipient_count?: number;
+          sent_count?: number;
+          failed_count?: number;
+          last_error?: string | null;
+          sent_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      email_logs: {
+        Row: {
+          id: string;
+          provider: string;
+          provider_message_id: string | null;
+          event_type: string;
+          status: string;
+          recipient_email: string;
+          subject: string;
+          template_key: string | null;
+          order_id: string | null;
+          campaign_id: string | null;
+          payload: Json | null;
+          error: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          provider?: string;
+          provider_message_id?: string | null;
+          event_type?: string;
+          status?: string;
+          recipient_email: string;
+          subject: string;
+          template_key?: string | null;
+          order_id?: string | null;
+          campaign_id?: string | null;
+          payload?: Json | null;
+          error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          provider?: string;
+          provider_message_id?: string | null;
+          event_type?: string;
+          status?: string;
+          recipient_email?: string;
+          subject?: string;
+          template_key?: string | null;
+          order_id?: string | null;
+          campaign_id?: string | null;
+          payload?: Json | null;
+          error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      track_order_by_ref_email: {
+        Args: { p_ref: string; p_email: string };
+        Returns: {
+          id: string;
+          sepay_ref: string | null;
+          stage: OrderStage;
+          total_amount: number;
+          created_at: string;
+          paid_at: string | null;
+          tracking_number: string | null;
+          shipping_carrier: string | null;
+          shipping_addr: Json | null;
+        }[];
+      };
+    };
     Enums: {
       order_stage: OrderStage;
     };

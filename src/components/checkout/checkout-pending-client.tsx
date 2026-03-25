@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/components/cart/cart-context";
 import { formatPrice } from "@/lib/format-locale";
 import { useLocaleContext, useTranslations } from "@/components/locale-provider";
 
@@ -17,12 +18,14 @@ type Props = {
 export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expiresAt }: Props) {
   const { locale } = useLocaleContext();
   const t = useTranslations();
+  const { clearCart } = useCart();
   const router = useRouter();
   const [stage, setStage] = useState("pending");
   const [showSuccess, setShowSuccess] = useState(false);
   const [flash, setFlash] = useState<"none" | "success" | "danger">("none");
   const [now, setNow] = useState(Date.now());
   const leaveRef = useRef(false);
+  const cartClearedRef = useRef(false);
   const expired = useMemo(() => {
     if (!expiresAt) return false;
     return new Date(expiresAt).getTime() <= now;
@@ -41,6 +44,10 @@ export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expires
           if (!d.status) return;
           setStage(d.status);
           if (d.status === "paid" && d.order_id) {
+            if (!cartClearedRef.current) {
+              cartClearedRef.current = true;
+              clearCart();
+            }
             setFlash("success");
             setShowSuccess(true);
             window.setTimeout(() => {
@@ -56,7 +63,7 @@ export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expires
         });
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [intentId, router]);
+  }, [intentId, router, clearCart]);
 
   const msLeft = expiresAt ? Math.max(0, new Date(expiresAt).getTime() - now) : 0;
   useEffect(() => {

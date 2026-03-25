@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Package,
   ShoppingCart,
   Users,
+  Mail,
   LogOut,
   Menu,
   X,
@@ -19,9 +20,23 @@ import { createClient } from "@/lib/supabase/client";
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations();
   const pathname = usePathname();
+  const isLoginPage = pathname === "/admin/login";
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (isLoginPage) setMenuOpen(false);
+  }, [isLoginPage]);
 
   const NAV: { href: string; labelKey: string; icon: typeof LayoutDashboard }[] =
     [
@@ -29,6 +44,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       { href: "/admin/products", labelKey: "admin.products.title", icon: Package },
       { href: "/admin/orders", labelKey: "admin.orders.title", icon: ShoppingCart },
       { href: "/admin/customers", labelKey: "admin.customers.title", icon: Users },
+      { href: "/admin/emails", labelKey: "admin.emails.title", icon: Mail },
     ];
 
   async function handleLogout() {
@@ -51,7 +67,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
 
   const sidebar = (
-    <aside className="flex h-full w-[240px] flex-col bg-eoi-ink">
+    <aside className="flex h-full min-h-[100dvh] w-[min(280px,85vw)] flex-col bg-eoi-ink md:w-[240px]">
       <div className="border-b border-white/10 px-4 py-5">
         <EoiLogo heightClass="h-8" />
         <p className="mt-1 font-dm text-[10px] font-medium uppercase tracking-wider text-[#666666]">
@@ -87,39 +103,49 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-dvh bg-eoi-bg">
-      <div className="sticky top-0 z-50 flex items-center justify-between border-b border-eoi-border bg-eoi-ink px-4 py-3 md:hidden">
-        <EoiLogo heightClass="h-7" />
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setMenuOpen((o) => !o)}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center text-white"
-            aria-label={menuOpen ? t("admin.shell.closeMenu") : t("admin.shell.openMenu")}
-          >
-            {menuOpen ? (
-              <X size={22} strokeWidth={1.8} />
-            ) : (
-              <Menu size={22} strokeWidth={1.8} />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {menuOpen ? (
-        <div className="fixed inset-0 z-40 flex md:hidden">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/50"
-            aria-label={t("admin.shell.closeOverlay")}
-            onClick={() => setMenuOpen(false)}
-          />
-          <div className="relative z-10 h-full shadow-xl">{sidebar}</div>
+      {!isLoginPage ? (
+        <div className="sticky top-0 z-50 flex items-center justify-between border-b border-eoi-border bg-eoi-ink px-3 py-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
+          <EoiLogo heightClass="h-7" />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center text-white"
+              aria-label={menuOpen ? t("admin.shell.closeMenu") : t("admin.shell.openMenu")}
+            >
+              {menuOpen ? (
+                <X size={22} strokeWidth={1.8} />
+              ) : (
+                <Menu size={22} strokeWidth={1.8} />
+              )}
+            </button>
+          </div>
         </div>
       ) : null}
 
-      <div className="flex min-h-dvh">
-        <div className="hidden md:block">{sidebar}</div>
-        <div className="min-h-dvh flex-1 md:ml-[240px]">{children}</div>
+      {menuOpen && !isLoginPage ? (
+        <div className="fixed inset-0 z-40 flex md:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
+            aria-label={t("admin.shell.closeOverlay")}
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="relative z-10 h-full min-h-[100dvh] shadow-xl">{sidebar}</div>
+        </div>
+      ) : null}
+
+      <div className="flex min-h-dvh min-h-[100dvh] w-full min-w-0">
+        {!isLoginPage ? <div className="hidden shrink-0 md:block">{sidebar}</div> : null}
+        <main
+          className={
+            isLoginPage
+              ? "min-h-dvh min-w-0 w-full max-w-full flex-1 overflow-x-hidden p-0"
+              : "min-h-dvh min-w-0 w-full max-w-full flex-1 overflow-x-hidden px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-4 sm:py-4 md:px-6 md:py-6"
+          }
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

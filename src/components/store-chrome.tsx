@@ -90,6 +90,12 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
           </Link>
           <div className="flex items-center gap-2">
             {isHome ? <LanguageSwitcher /> : null}
+            <Link
+              href="/track"
+              className="hidden min-h-[44px] items-center font-dm text-xs font-medium text-eoi-ink2 hover:text-eoi-ink md:inline-flex"
+            >
+              {t("nav.trackOrder")}
+            </Link>
             {userEmail ? (
               <Link
                 href="/account"

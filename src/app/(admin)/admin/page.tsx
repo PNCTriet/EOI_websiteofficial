@@ -127,35 +127,35 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="p-5 md:p-6">
-      <h1 className="font-syne text-2xl font-bold tracking-[-0.5px] text-eoi-ink">
+    <div className="min-w-0">
+      <h1 className="font-syne text-xl font-bold tracking-[-0.5px] text-eoi-ink sm:text-2xl">
         {tr("admin.dashboard.title")}
       </h1>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-3 lg:grid-cols-4">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <div
             key={label}
-            className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm"
+            className="rounded-2xl border border-eoi-border bg-white p-3 shadow-sm sm:p-4"
           >
-            <div className="flex items-center justify-between">
-              <span className="font-dm text-xs font-medium text-eoi-ink2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-dm text-[11px] font-medium leading-tight text-eoi-ink2 sm:text-xs">
                 {label}
               </span>
-              <Icon size={22} strokeWidth={1.8} className={color} aria-hidden />
+              <Icon size={20} strokeWidth={1.8} className={`shrink-0 ${color}`} aria-hidden />
             </div>
-            <p className="mt-2 font-syne text-2xl font-extrabold tracking-[-0.5px] text-eoi-ink">
+            <p className="mt-1.5 font-syne text-lg font-extrabold tracking-[-0.5px] text-eoi-ink sm:mt-2 sm:text-2xl">
               {value}
             </p>
           </div>
         ))}
       </div>
 
-      <section className="mt-8">
-        <h2 className="mb-3 font-syne text-lg font-bold text-eoi-ink">
+      <section className="mt-6 sm:mt-8">
+        <h2 className="mb-2 font-syne text-base font-bold text-eoi-ink sm:mb-3 sm:text-lg">
           {tr("admin.dashboard.recentOrders")}
         </h2>
-        <div className="overflow-x-auto rounded-2xl border border-eoi-border bg-white shadow-sm">
+        <div className="-mx-0 overflow-x-auto overscroll-x-contain rounded-2xl border border-eoi-border bg-white shadow-sm">
           <table className="w-full min-w-[640px] text-left font-dm text-sm">
             <thead>
               <tr className="border-b border-eoi-border bg-eoi-surface/80">

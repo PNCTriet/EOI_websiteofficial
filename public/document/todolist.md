@@ -80,16 +80,16 @@
 ## Phase 4 — Order Management (xem chi tiết ORDER.md)
 
 ### 4.1 Admin
-- [ ] Timeline xử lý đơn đúng nghiệp vụ: `paid` → `processing` → `printing` → `shipped` → `delivered`
-- [ ] Validate chuyển stage hợp lệ (không được nhảy cóc)
-- [ ] Trường `tracking_number` + `shipping_carrier` khi chuyển sang `shipped`
-- [ ] Filter + search orders theo stage, ngày, tên khách, sepay_ref
-- [ ] Export đơn hàng ra CSV (admin)
+- [x] Timeline xử lý đơn đúng nghiệp vụ: `paid` → `processing` → `printing` → `shipped` → `delivered`
+- [x] Validate chuyển stage hợp lệ (không được nhảy cóc) — API `POST /api/admin/orders/[id]/stage`
+- [x] Trường `tracking_number` + `shipping_carrier` khi chuyển sang `shipped` (migration + form admin)
+- [x] Filter + search orders theo stage, ngày, tên khách, sepay_ref
+- [x] Export đơn hàng ra CSV (admin) — `GET /api/admin/orders/export`
 
 ### 4.2 User
-- [ ] `/account/orders` — danh sách đơn với stage badge, ngày tạo, tổng tiền
-- [ ] `/account/orders/[id]` — chi tiết đơn: items, địa chỉ, lịch sử stage, tracking number
-- [ ] Trang public `/track?ref=EOI-XXXXXX` — tra đơn không cần login (nhập ref + email)
+- [x] `/account/orders` — danh sách đơn với stage badge, ngày tạo, tổng tiền
+- [x] `/account/orders/[id]` — chi tiết đơn: items, địa chỉ, lịch sử stage, tracking number
+- [x] Trang public `/track` — tra đơn không cần login (nhập ref + email; RPC `track_order_by_ref_email`)
 
 ### 4.3 Thông báo
 - [ ] Email xác nhận đặt hàng (sau khi tạo order thành công)

@@ -1,4 +1,5 @@
 import { createHmac } from "crypto";
+import { sendTemplatedEmail } from "@/lib/email-center";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Json } from "@/types/database";
 
@@ -178,6 +179,20 @@ export async function POST(request: Request) {
     .eq("id", intent.id);
   if (log) {
     await supabase.from("sepay_logs").update({ matched: true, order_id: order.id }).eq("id", log.id);
+  }
+
+  const shippingAddr = intent.shipping_addr as Record<string, unknown> | null;
+  const email = typeof shippingAddr?.email === "string" ? shippingAddr.email.trim() : "";
+  if (email) {
+    await sendTemplatedEmail({
+      to: email,
+      templateKey: "order_paid",
+      orderId: order.id,
+      variables: {
+        order_ref: intent.sepay_ref,
+        order_total: Number(intent.amount),
+      },
+    });
   }
   return Response.json({ received: true, matched: true, orderId: order.id });
 }

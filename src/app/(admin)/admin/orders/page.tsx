@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import { AdminOrdersKanban } from "@/components/admin/admin-orders-kanban";
 import { OrderStageBadge } from "@/components/admin/order-stage-badge";
 import { createClient } from "@/lib/supabase/server";
@@ -38,11 +38,34 @@ const TABS: {
 ];
 
 type Props = {
-  searchParams: Promise<{ stage?: string; view?: string }>;
+  searchParams: Promise<{
+    stage?: string;
+    view?: string;
+    q?: string;
+    from?: string;
+    to?: string;
+  }>;
 };
 
+function buildOrdersQuery(parts: {
+  stage?: string;
+  view?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+}): string {
+  const p = new URLSearchParams();
+  if (parts.stage && parts.stage !== "all") p.set("stage", parts.stage);
+  if (parts.view === "kanban") p.set("view", "kanban");
+  if (parts.q?.trim()) p.set("q", parts.q.trim());
+  if (parts.from) p.set("from", parts.from);
+  if (parts.to) p.set("to", parts.to);
+  return p.toString();
+}
+
 export default async function AdminOrdersPage({ searchParams }: Props) {
-  const { stage: stageParam, view: viewParam } = await searchParams;
+  const { stage: stageParam, view: viewParam, q: qParam, from: fromParam, to: toParam } =
+    await searchParams;
   const { locale, messages } = await getServerI18n();
   const tr = (path: string, vars?: Record<string, string>) => t(messages, path, vars);
 
@@ -55,10 +78,23 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         "id, sepay_ref, total_amount, stage, created_at, user_id, shipping_addr, customers ( name )"
       )
       .order("created_at", { ascending: false });
+
     if (stageParam && stageParam !== "all") {
       q = q.eq("stage", stageParam as OrderStage);
     }
-    const { data } = await q;
+    if (fromParam) {
+      const d = new Date(fromParam);
+      if (!Number.isNaN(d.getTime())) q = q.gte("created_at", d.toISOString());
+    }
+    if (toParam) {
+      const d = new Date(toParam);
+      if (!Number.isNaN(d.getTime())) {
+        d.setHours(23, 59, 59, 999);
+        q = q.lte("created_at", d.toISOString());
+      }
+    }
+
+    const { data } = await q.limit(8000);
     orders = (data as OrderRow[] | null) ?? [];
   } catch {
     orders = [];
@@ -83,25 +119,50 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
     return name || tr("common.dash");
   }
 
+  if (qParam?.trim()) {
+    const term = qParam.trim().toLowerCase();
+    orders = orders.filter((o) => {
+      const ref = (o.sepay_ref ?? o.id).toLowerCase();
+      return ref.includes(term) || displayName(o).toLowerCase().includes(term);
+    });
+  }
+
   const isKanban = viewParam === "kanban";
+  const listQuery = buildOrdersQuery({
+    stage: stageParam,
+    view: isKanban ? "kanban" : undefined,
+    q: qParam,
+    from: fromParam,
+    to: toParam,
+  });
+  const exportHref = `/api/admin/orders/export?${buildOrdersQuery({
+    stage: stageParam,
+    q: qParam,
+    from: fromParam,
+    to: toParam,
+  })}`;
+
   const viewQuery = (v: "table" | "kanban") => {
-    const p = new URLSearchParams();
-    if (stageParam && stageParam !== "all") p.set("stage", stageParam);
-    if (v === "kanban") p.set("view", "kanban");
-    const qs = p.toString();
+    const qs = buildOrdersQuery({
+      stage: stageParam,
+      view: v === "kanban" ? "kanban" : undefined,
+      q: qParam,
+      from: fromParam,
+      to: toParam,
+    });
     return qs ? `/admin/orders?${qs}` : "/admin/orders";
   };
 
   return (
-    <div className="p-5 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-syne text-2xl font-bold tracking-[-0.5px] text-eoi-ink">
+    <div className="min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <h1 className="font-syne text-xl font-bold tracking-[-0.5px] text-eoi-ink sm:text-2xl">
           {tr("admin.orders.title")}
         </h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href={viewQuery("table")}
-            className={`rounded-full px-4 py-2.5 font-dm text-xs font-semibold min-h-[44px] flex items-center ${
+            className={`rounded-full px-3 py-2 font-dm text-xs font-semibold min-h-[44px] flex items-center sm:px-4 sm:py-2.5 ${
               !isKanban ? "bg-eoi-ink text-white" : "border border-eoi-border bg-white text-eoi-ink2"
             }`}
           >
@@ -109,21 +170,74 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           </Link>
           <Link
             href={viewQuery("kanban")}
-            className={`rounded-full px-4 py-2.5 font-dm text-xs font-semibold min-h-[44px] flex items-center ${
+            className={`rounded-full px-3 py-2 font-dm text-xs font-semibold min-h-[44px] flex items-center sm:px-4 sm:py-2.5 ${
               isKanban ? "bg-eoi-ink text-white" : "border border-eoi-border bg-white text-eoi-ink2"
             }`}
           >
             {tr("admin.orders.viewKanban")}
           </Link>
+          <a
+            href={exportHref}
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-eoi-border bg-white px-3 py-2 font-dm text-xs font-semibold text-eoi-ink sm:px-4"
+          >
+            <Download size={16} strokeWidth={2} aria-hidden />
+            {tr("admin.orders.exportCsv")}
+          </a>
         </div>
       </div>
 
-      <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
+      <form
+        method="get"
+        action="/admin/orders"
+        className="mt-4 flex flex-col gap-3 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end"
+      >
+        {isKanban ? <input type="hidden" name="view" value="kanban" /> : null}
+        {stageParam && stageParam !== "all" ? <input type="hidden" name="stage" value={stageParam} /> : null}
+        <label className="block min-w-[180px] flex-1 font-dm text-xs text-eoi-ink2">
+          <span className="mb-1 block font-medium">{tr("admin.orders.searchOrders")}</span>
+          <input
+            type="search"
+            name="q"
+            defaultValue={qParam ?? ""}
+            placeholder={tr("admin.orders.searchPlaceholder")}
+            className="w-full rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm text-eoi-ink"
+          />
+        </label>
+        <label className="block min-w-[140px] font-dm text-xs text-eoi-ink2">
+          <span className="mb-1 block font-medium">{tr("admin.orders.dateFrom")}</span>
+          <input
+            type="date"
+            name="from"
+            defaultValue={fromParam ?? ""}
+            className="w-full rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm"
+          />
+        </label>
+        <label className="block min-w-[140px] font-dm text-xs text-eoi-ink2">
+          <span className="mb-1 block font-medium">{tr("admin.orders.dateTo")}</span>
+          <input
+            type="date"
+            name="to"
+            defaultValue={toParam ?? ""}
+            className="w-full rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm"
+          />
+        </label>
+        <button
+          type="submit"
+          className="min-h-[44px] rounded-full bg-eoi-ink px-5 py-2 font-dm text-sm font-semibold text-white"
+        >
+          {tr("admin.orders.applyFilters")}
+        </button>
+      </form>
+
+      <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto overscroll-x-contain pb-1">
         {TABS.map((tab) => {
-          const p = new URLSearchParams();
-          if (tab.stage) p.set("stage", tab.stage);
-          if (isKanban) p.set("view", "kanban");
-          const qs = p.toString();
+          const qs = buildOrdersQuery({
+            stage: tab.stage ?? undefined,
+            view: isKanban ? "kanban" : undefined,
+            q: qParam,
+            from: fromParam,
+            to: toParam,
+          });
           const href = qs ? `/admin/orders?${qs}` : isKanban ? "/admin/orders?view=kanban" : "/admin/orders";
           const active =
             tab.stage === null
@@ -157,7 +271,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           messages={messages}
         />
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-eoi-border bg-white shadow-sm">
+        <div className="mt-4 overflow-x-auto overscroll-x-contain rounded-2xl border border-eoi-border bg-white shadow-sm sm:mt-6">
           <table className="w-full min-w-[720px] text-left font-dm text-sm">
             <thead>
               <tr className="border-b border-eoi-border bg-eoi-surface/80">
