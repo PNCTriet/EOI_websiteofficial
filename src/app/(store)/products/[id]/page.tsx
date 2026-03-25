@@ -23,15 +23,39 @@ type Props = { params: Promise<{ id: string }> };
 async function getProduct(id: string): Promise<ProductRow | null> {
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select(
-        "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at"
-      )
-      .eq("id", id)
-      .single();
-    if (!error && data) {
-      return data as ProductRow;
+    const selectWithThumb =
+      "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
+    const selectWithoutThumb =
+      "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
+
+    async function load(includeThumb: boolean): Promise<{
+      data: ProductRow | null;
+      error: unknown;
+    }> {
+      const select = includeThumb ? selectWithThumb : selectWithoutThumb;
+      const { data, error } = await supabase
+        .from("products")
+        .select(select)
+        .eq("id", id)
+        .single();
+      return { data: (data as ProductRow | null) ?? null, error };
+    }
+
+    const first = await load(true);
+
+    // Happy path
+    if (!first.error && first.data) return first.data;
+
+    // If thumbnail migration hasn't been applied yet, retry without `image_thumb_urls`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const firstError =
+      typeof first.error === "object" && first.error
+        ? (first.error as any).message
+        : undefined;
+
+    if (firstError && /image_thumb_urls/i.test(firstError)) {
+      const retry = await load(false);
+      if (!retry.error && retry.data) return retry.data;
     }
   } catch {
     /* fall through */

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Plus } from "lucide-react";
 import { unstable_cache } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClientWithoutCookies } from "@/lib/supabase/server";
 import { CategoryChips } from "@/components/category-chips";
 import { badgeLabel } from "@/i18n/badge-label";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -18,27 +18,63 @@ import type { ProductRow } from "@/types/database";
 
 async function fetchProductsUncached(): Promise<ProductRow[]> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select(
-        "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at"
-      )
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+    const supabase = createClientWithoutCookies();
+    const selectWithThumb =
+      "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
+    const selectWithoutThumb =
+      "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
 
-    if (error || !data?.length) {
-      return PLACEHOLDER_PRODUCTS;
+    async function load(includeThumb: boolean): Promise<{
+      data: ProductRow[] | null;
+      error: unknown;
+    }> {
+      const select = includeThumb ? selectWithThumb : selectWithoutThumb;
+      const { data, error } = await supabase
+        .from("products")
+        .select(select)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      return { data: (data as ProductRow[] | null) ?? null, error };
     }
-    return data as ProductRow[];
-  } catch {
+
+    const first = await load(true);
+    const firstError =
+      typeof first.error === "object" && first.error
+        ? // supabase error has shape { message: string }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (first.error as any).message
+        : undefined;
+
+    if (firstError) {
+      console.warn("[store] fetchProducts: first query failed", {
+        message: String(firstError),
+      });
+    }
+
+    if (!firstError && first.data?.length) return first.data;
+    if (!firstError && !first.data?.length) {
+      console.warn(
+        "[store] fetchProducts: no rows returned (is_active=true?)"
+      );
+    }
+
+    // If thumbnail migration hasn't been applied yet, retry without `image_thumb_urls`.
+    if (firstError && /image_thumb_urls/i.test(firstError)) {
+      const retry = await load(false);
+      if (retry.data?.length) return retry.data;
+    }
+
+    return PLACEHOLDER_PRODUCTS;
+  } catch (err) {
+    console.warn("[store] fetchProducts: unexpected error", err);
     return PLACEHOLDER_PRODUCTS;
   }
 }
 
 const fetchProducts = unstable_cache(fetchProductsUncached, ["active-products"], {
-  // 1 giờ
-  revalidate: 60 * 60,
+  // Dev: giảm để tránh "dính" placeholder do cache cũ.
+  // Prod: 1 giờ
+  revalidate: process.env.NODE_ENV === "development" ? 10 : 60 * 60,
 });
 
 function badgeStyles(badge: string | null): string {

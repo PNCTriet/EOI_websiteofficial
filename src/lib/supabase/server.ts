@@ -25,3 +25,26 @@ export async function createClient() {
     }
   );
 }
+
+/**
+ * Create Supabase SSR client WITHOUT Next.js `cookies()`.
+ *
+ * Useful when the caller runs inside Next.js cache scopes (e.g. `unstable_cache`)
+ * where accessing dynamic request data is not allowed.
+ */
+export function createClientWithoutCookies() {
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {
+          // no-op: static/anonymous reads only
+        },
+      },
+    }
+  );
+}
