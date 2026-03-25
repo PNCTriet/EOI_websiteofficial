@@ -22,7 +22,7 @@ async function fetchProductsUncached(): Promise<ProductRow[]> {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at"
+        "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at"
       )
       .eq("is_active", true)
       .order("created_at", { ascending: false });
@@ -154,9 +154,9 @@ export default async function StoreHomePage() {
                     </div>
                   );
                 })()}
-                {p.image_urls?.[0] ? (
+                {(p.image_thumb_urls?.[0] ?? p.image_urls?.[0]) ? (
                   <Image
-                    src={p.image_urls[0]}
+                    src={p.image_thumb_urls?.[0] ?? p.image_urls?.[0] ?? ""}
                     alt=""
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"

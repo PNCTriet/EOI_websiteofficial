@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { brandAssets } from "@/lib/brand-assets";
 import { getLocale } from "@/lib/locale";
 import "./globals.css";
+import { WebVitalsClient } from "@/components/web-vitals-client";
 
 function siteOrigin(): URL {
   const raw =
@@ -67,6 +68,7 @@ export default async function RootLayout({
       <body className="min-h-dvh font-sans antialiased">
         <LocaleProvider locale={locale} messages={messages}>
           {children}
+          <WebVitalsClient />
         </LocaleProvider>
       </body>
     </html>

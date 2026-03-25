@@ -84,10 +84,10 @@ export default async function AdminProductsPage() {
                 >
                   <td className="px-4 py-2">
                     <div className="h-10 w-10 overflow-hidden rounded-lg bg-eoi-border">
-                      {p.image_urls?.[0] ? (
+                      {(p.image_thumb_urls?.[0] ?? p.image_urls?.[0]) ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={p.image_urls[0]}
+                          src={p.image_thumb_urls?.[0] ?? p.image_urls?.[0]}
                           alt=""
                           className="h-full w-full object-cover"
                         />

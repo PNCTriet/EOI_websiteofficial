@@ -2,8 +2,8 @@ import type { Locale } from "./config";
 
 const vi = {
   meta: {
-    title: "eoi — in 3D sáng tạo",
-    description: "Cửa hàng in 3D handmade sáng tạo",
+    title: "EOI - Design Printing",
+    description: "Của hàng linh tinh",
   },
   common: {
     loading: "Đang tải…",
@@ -34,7 +34,7 @@ const vi = {
     sale: "Sale",
   },
   store: {
-    heroTitle: "in 3D sáng tạo",
+    heroTitle: "3D linh tinh",
     heroSubtitle:
       "Mô hình, phụ kiện và đồ trang trí handmade — mỗi sản phẩm là một phiên bản duy nhất.",
     shopNow: "Mua ngay",
@@ -125,10 +125,10 @@ const vi = {
     paymentUnknown: "—",
     heroEyebrow: "mới ra mắt",
     heroTitleBefore: "In 3D / ",
-    heroTitleAccent: "sáng tạo",
-    heroTitleAfter: " / không giới hạn",
+    heroTitleAccent: "Printing Design",
+    heroTitleAfter: " / rất linh tinh",
     heroDescription:
-      "eoi — in 3D sáng tạo. Decor handmade, playful & bold cho không gian của bạn.",
+      "EOI — 3D ráng tạo. Decor handmade, playful & bold cho không gian của bạn.",
     exploreNow: "Khám phá ngay",
     categoriesSectionAria: "Danh mục",
     bottomSearch: "Tìm",

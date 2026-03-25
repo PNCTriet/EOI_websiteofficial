@@ -31,6 +31,7 @@ export type Database = {
           delivery_days_min: number;
           delivery_days_max: number;
           image_urls: string[] | null;
+          image_thumb_urls: string[] | null;
           stl_url: string | null;
           is_active: boolean;
           colors: string[] | null;
@@ -50,6 +51,7 @@ export type Database = {
           delivery_days_min?: number;
           delivery_days_max?: number;
           image_urls?: string[] | null;
+          image_thumb_urls?: string[] | null;
           stl_url?: string | null;
           is_active?: boolean;
           colors?: string[] | null;
@@ -69,6 +71,7 @@ export type Database = {
           delivery_days_min?: number;
           delivery_days_max?: number;
           image_urls?: string[] | null;
+          image_thumb_urls?: string[] | null;
           stl_url?: string | null;
           is_active?: boolean;
           colors?: string[] | null;

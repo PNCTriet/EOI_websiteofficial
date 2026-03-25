@@ -54,6 +54,7 @@ export default function AdminProductFormPage() {
   const [stlUrl, setStlUrl] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imageThumbUrls, setImageThumbUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   /** Bump after loading product so TipTap remounts with correct HTML */
   const [descriptionEditorEpoch, setDescriptionEditorEpoch] = useState(0);
@@ -97,6 +98,7 @@ export default function AdminProductFormPage() {
       setStlUrl(p.stl_url ?? "");
       setIsActive(p.is_active);
       setImageUrls(p.image_urls ?? []);
+      setImageThumbUrls(p.image_thumb_urls ?? []);
       setMaterial(p.material ?? "");
       const cat = (p.category ?? "").trim();
       if (cat && isStoreCategorySlug(cat.toLowerCase())) {
@@ -129,6 +131,36 @@ export default function AdminProductFormPage() {
     setError(null);
     const supabase = createClient();
     const next: string[] = [...imageUrls];
+    const nextThumbs: string[] = [...imageThumbUrls];
+
+    async function makeThumbnailBlob(file: File): Promise<Blob | null> {
+      if (!file.type.startsWith("image/")) return null;
+      try {
+        const bitmap = await createImageBitmap(file);
+        const maxDim = 640;
+        const w = bitmap.width;
+        const h = bitmap.height;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        const tw = Math.max(1, Math.round(w * scale));
+        const th = Math.max(1, Math.round(h * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = tw;
+        canvas.height = th;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
+        ctx.drawImage(bitmap, 0, 0, tw, th);
+        const blob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob(
+            (b) => resolve(b),
+            "image/jpeg",
+            0.82
+          );
+        });
+        return blob;
+      } catch {
+        return null;
+      }
+    }
     for (const file of Array.from(files)) {
       if (!file.type.startsWith("image/")) {
         setError(t("admin.products.invalidImageType"));
@@ -153,8 +185,28 @@ export default function AdminProductFormPage() {
         data: { publicUrl },
       } = supabase.storage.from("product-images").getPublicUrl(path);
       next.push(publicUrl);
+
+      const thumbBlob = await makeThumbnailBlob(file);
+      if (thumbBlob) {
+        const thumbPath = `thumb-${path}`;
+        const { error: upThumbErr } = await supabase.storage
+          .from("product-images")
+          .upload(thumbPath, thumbBlob, { contentType: "image/jpeg" });
+        if (!upThumbErr) {
+          const {
+            data: { publicUrl: thumbPublicUrl },
+          } = supabase.storage.from("product-images").getPublicUrl(thumbPath);
+          nextThumbs.push(thumbPublicUrl);
+        } else {
+          // Fallback to original if thumbnail upload fails.
+          nextThumbs.push(publicUrl);
+        }
+      } else {
+        nextThumbs.push(publicUrl);
+      }
     }
     setImageUrls(next);
+    setImageThumbUrls(nextThumbs);
     setUploading(false);
   }
 
@@ -232,6 +284,7 @@ export default function AdminProductFormPage() {
       stl_url: stlUrl.trim() || null,
       is_active: isActive,
       image_urls: imageUrls.length ? imageUrls : null,
+      image_thumb_urls: imageThumbUrls.length ? imageThumbUrls : null,
       category: categoryResolved,
       material: material.trim() || null,
       badge: badge.trim() || null,
@@ -278,6 +331,7 @@ export default function AdminProductFormPage() {
 
   function removeImageAt(index: number) {
     setImageUrls((prev) => prev.filter((_, i) => i !== index));
+    setImageThumbUrls((prev) => prev.filter((_, i) => i !== index));
   }
 
   if (loading) {
@@ -545,7 +599,7 @@ export default function AdminProductFormPage() {
               <div key={`${url}-${i}`} className="group relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={url}
+                  src={imageThumbUrls[i] ?? url}
                   alt=""
                   className="h-16 w-16 rounded-lg border border-eoi-border object-cover"
                 />

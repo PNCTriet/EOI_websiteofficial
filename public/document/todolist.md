@@ -104,9 +104,9 @@
 - [x] `sitemap.xml` động — include tất cả sản phẩm active
 - [x] `robots.txt` — block `/admin`, `/checkout`, `/account`
 - [x] Cache danh sách sản phẩm (Next.js `unstable_cache` hoặc ISR)
-- [ ] Thumbnail strategy: resize ảnh khi upload, lưu thêm `image_thumb_url`
-- [ ] Đánh giá region: Vercel `ap-southeast-1` (Singapore) + Supabase cùng region
-- [ ] Web Vitals monitoring (Vercel Analytics hoặc self-hosted)
+- [x] Thumbnail strategy: resize ảnh khi upload, lưu thêm `image_thumb_urls`
+- [x] Đánh giá region: Vercel `ap-southeast-1` (Singapore) + Supabase cùng region (xem `public/document/ops.md`)
+- [x] Web Vitals monitoring (self-hosted: log CLS/LCP/TTFB/FCP/INP)
 
 ---
 
@@ -115,8 +115,8 @@
 - [x] Error boundary cho các luồng quan trọng (checkout, payment, order update)
 - [x] Logging có cấu trúc cho webhook + payment events
 - [x] Rate limiting cho `/api/webhook/sepay` và auth endpoints
-- [ ] Backup strategy cho Supabase DB
-- [ ] Staging environment tách biệt production
+- [x] Backup strategy cho Supabase DB
+- [x] Staging environment tách biệt production
 
 ---
 

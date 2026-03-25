@@ -5,6 +5,7 @@ import Image from "next/image";
 
 type Props = {
   imageUrls: string[] | null;
+  thumbUrls?: string[] | null;
   accentBg: string | null;
   emptyLabel?: string;
 };
@@ -12,13 +13,21 @@ type Props = {
 /** Khung 4:5, ảnh object-cover (lấp đầy thẻ, có thể cắt nhẹ viền). Nhiều ảnh: thumbnail bên dưới. */
 export function ProductImageGallery({
   imageUrls,
+  thumbUrls,
   accentBg,
   emptyLabel = "3D",
 }: Props) {
   const urls = (imageUrls ?? []).filter(Boolean);
+  const thumbs = (thumbUrls ?? []).filter(Boolean);
   const [active, setActive] = useState(0);
   const safeIndex = urls.length ? Math.min(active, urls.length - 1) : 0;
   const main = urls[safeIndex];
+
+  const thumbFor = (i: number) => {
+    if (thumbs.length === urls.length) return thumbs[i] ?? urls[i] ?? "";
+    if (thumbs.length > 0) return thumbs[Math.min(i, thumbs.length - 1)] ?? urls[i] ?? "";
+    return urls[i] ?? "";
+  };
 
   return (
     <div className="w-full">
@@ -69,7 +78,7 @@ export function ProductImageGallery({
               }}
             >
               <Image
-                src={url}
+                src={thumbFor(i)}
                 alt=""
                 fill
                 sizes="58px"

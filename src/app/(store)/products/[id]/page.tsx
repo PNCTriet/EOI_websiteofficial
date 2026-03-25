@@ -26,7 +26,7 @@ async function getProduct(id: string): Promise<ProductRow | null> {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at"
+        "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at"
       )
       .eq("id", id)
       .single();
@@ -123,6 +123,7 @@ export default async function ProductDetailPage({ params }: Props) {
         <ProductImageGallery
           key={product.id}
           imageUrls={product.image_urls}
+          thumbUrls={product.image_thumb_urls}
           accentBg={product.accent_bg}
         />
       </div>
