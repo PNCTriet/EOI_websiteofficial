@@ -25,6 +25,11 @@ function startOfMonthIso(): string {
   return new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
 }
 
+function startOfNextMonthIso(): string {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1).toISOString();
+}
+
 export default async function AdminDashboardPage() {
   const { locale, messages } = await getServerI18n();
   const tr = (path: string, vars?: Record<string, string>) =>
@@ -44,11 +49,16 @@ export default async function AdminDashboardPage() {
       .select("*", { count: "exact", head: true });
     totalOrders = c1 ?? 0;
 
+    // Revenue = đã thu tiền trong tháng (theo paid_at), không chỉ stage "paid"
+    // (đơn đã in/giao vẫn có paid_at, không còn stage "paid").
+    const monthStart = startOfMonthIso();
+    const monthEnd = startOfNextMonthIso();
     const { data: paidMonth } = await supabase
       .from("orders")
       .select("total_amount")
-      .eq("stage", "paid")
-      .gte("created_at", startOfMonthIso());
+      .not("paid_at", "is", null)
+      .gte("paid_at", monthStart)
+      .lt("paid_at", monthEnd);
     revenueMonth =
       paidMonth?.reduce((s, r) => s + (r.total_amount ?? 0), 0) ?? 0;
 
