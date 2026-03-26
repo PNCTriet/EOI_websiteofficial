@@ -79,8 +79,8 @@ async function fetchProductsUncached(): Promise<ProductRow[]> {
 
 const fetchProducts = unstable_cache(fetchProductsUncached, ["active-products"], {
   // Dev: giảm để tránh "dính" placeholder do cache cũ.
-  // Prod: 1 giờ
-  revalidate: process.env.NODE_ENV === "development" ? 10 : 60 * 60,
+  // Prod: 60 giây để hạn chế stale UI sau khi admin cập nhật.
+  revalidate: process.env.NODE_ENV === "development" ? 10 : 60,
 });
 
 function badgeStyles(badge: string | null): string {
