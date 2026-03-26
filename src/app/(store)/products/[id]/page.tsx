@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/i18n/dictionaries";
 import { t } from "@/i18n/translate";
@@ -16,10 +17,22 @@ import { getLocale } from "@/lib/locale";
 import { storeCategoryLabel } from "@/lib/product-taxonomy";
 import type { ProductRow } from "@/types/database";
 import { brandAssets } from "@/lib/brand-assets";
+import { stripHtmlForPreview } from "@/lib/product-description";
 
 type Props = { params: Promise<{ id: string }> };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+function siteOrigin(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+  try {
+    return new URL(raw ?? "http://localhost:3000").origin;
+  } catch {
+    return "http://localhost:3000";
+  }
+}
 
 type ProductFetchState = {
   product: ProductRow | null;
@@ -79,6 +92,93 @@ async function getProduct(id: string): Promise<ProductFetchState> {
     return { product: null, maintenance: true };
   }
   return { product: null, maintenance: false };
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const locale = await getLocale();
+  const messages = getDictionary(locale);
+  const tr = (path: string, vars?: Record<string, string>) => t(messages, path, vars);
+  const origin = siteOrigin();
+  const productUrl = `${origin}/products/${id}`;
+  const { product, maintenance } = await getProduct(id);
+
+  if (maintenance) {
+    const title = "EOI — Hệ thống đang bảo trì";
+    const description =
+      "Không thể tải dữ liệu sản phẩm lúc này. Vui lòng quay lại sau hoặc liên hệ Instagram @eolinhtinh.";
+    return {
+      title,
+      description,
+      alternates: { canonical: productUrl },
+      openGraph: {
+        type: "website",
+        title,
+        description,
+        url: productUrl,
+        siteName: "EOI - Design Printing",
+        images: [{ url: brandAssets.ogImage }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [brandAssets.ogImage],
+      },
+    };
+  }
+
+  if (!product) {
+    const title = tr("store.productNotFound");
+    const description = tr("store.backToStore");
+    return {
+      title,
+      description,
+      alternates: { canonical: productUrl },
+      openGraph: {
+        type: "website",
+        title,
+        description,
+        url: productUrl,
+        siteName: "EOI - Design Printing",
+        images: [{ url: brandAssets.ogImage }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [brandAssets.ogImage],
+      },
+    };
+  }
+
+  const image = product.image_thumb_urls?.[0] ?? product.image_urls?.[0] ?? brandAssets.ogImage;
+  const title = `${product.name} | EOI`;
+  const descriptionRaw = product.description?.trim()
+    ? stripHtmlForPreview(product.description)
+    : tr("store.productDefaultDescription");
+  const description =
+    descriptionRaw.length > 180 ? `${descriptionRaw.slice(0, 177).trimEnd()}...` : descriptionRaw;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: productUrl },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url: productUrl,
+      siteName: "EOI - Design Printing",
+      images: [{ url: image }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
