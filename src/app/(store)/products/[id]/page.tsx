@@ -13,14 +13,18 @@ import {
   isProductAvailability,
 } from "@/lib/product-availability";
 import { getLocale } from "@/lib/locale";
-import { PLACEHOLDER_PRODUCTS } from "@/lib/placeholder-products";
 import { storeCategoryLabel } from "@/lib/product-taxonomy";
 import type { ProductRow } from "@/types/database";
 import { brandAssets } from "@/lib/brand-assets";
 
 type Props = { params: Promise<{ id: string }> };
 
-async function getProduct(id: string): Promise<ProductRow | null> {
+type ProductFetchState = {
+  product: ProductRow | null;
+  maintenance: boolean;
+};
+
+async function getProduct(id: string): Promise<ProductFetchState> {
   try {
     const supabase = await createClient();
     const selectWithThumb =
@@ -44,7 +48,7 @@ async function getProduct(id: string): Promise<ProductRow | null> {
     const first = await load(true);
 
     // Happy path
-    if (!first.error && first.data) return first.data;
+    if (!first.error && first.data) return { product: first.data, maintenance: false };
 
     // If thumbnail migration hasn't been applied yet, retry without `image_thumb_urls`.
     const firstError =
@@ -61,18 +65,48 @@ async function getProduct(id: string): Promise<ProductRow | null> {
 
     if (firstError && /image_thumb_urls/i.test(firstError)) {
       const retry = await load(false);
-      if (!retry.error && retry.data) return retry.data;
+      if (!retry.error && retry.data) {
+        return { product: retry.data, maintenance: false };
+      }
+    }
+    // Query failed for reasons other than not found.
+    if (first.error) {
+      return { product: null, maintenance: true };
     }
   } catch {
-    /* fall through */
+    return { product: null, maintenance: true };
   }
-  const fromPlaceholder = PLACEHOLDER_PRODUCTS.find((p) => p.id === id);
-  return fromPlaceholder ?? null;
+  return { product: null, maintenance: false };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
   const { id } = await params;
-  const product = await getProduct(id);
+  const { product, maintenance } = await getProduct(id);
+  const instagramUrl =
+    process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL?.trim() ||
+    "https://www.instagram.com/eolinhtinh/";
+
+  if (maintenance) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-5 py-10 md:px-6">
+        <div className="rounded-2xl border border-eoi-border bg-white p-6 shadow-sm">
+          <h1 className="font-syne text-2xl font-bold text-eoi-ink">Hệ thống đang bảo trì</h1>
+          <p className="mt-2 font-dm text-sm text-eoi-ink2">
+            Không thể tải dữ liệu sản phẩm từ Supabase lúc này. Vui lòng thử lại sau hoặc liên hệ Instagram.
+          </p>
+          <a
+            href={instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-full bg-eoi-blue px-5 font-dm text-sm font-semibold text-white"
+          >
+            Instagram @eolinhtinh
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   if (!product) {
     notFound();
   }

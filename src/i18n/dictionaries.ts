@@ -302,6 +302,13 @@ const vi = {
       invalidPrice: "Giá không hợp lệ",
       invalidImageType: "Chỉ hỗ trợ file ảnh (image/*).",
       imageTooLarge: "Ảnh vượt quá 5MB.",
+      uploadErrorPermission:
+        "Không có quyền upload ảnh. Kiểm tra role admin hoặc policy Storage (RLS).",
+      uploadErrorInvalidKey:
+        "Tên file chứa ký tự không hợp lệ. Hãy đổi tên file ngắn gọn (a-z, 0-9, -, _).",
+      uploadErrorNetwork:
+        "Lỗi mạng khi upload. Vui lòng thử lại.",
+      uploadErrorGeneric: "Upload ảnh thất bại",
       formTitleNew: "Thêm sản phẩm",
       formTitleEdit: "Chỉnh sửa sản phẩm",
       productNameField: "Tên sản phẩm",
@@ -755,6 +762,12 @@ const en: Messages = {
       invalidPrice: "Invalid price",
       invalidImageType: "Only image files are allowed (image/*).",
       imageTooLarge: "Image size must be 5MB or less.",
+      uploadErrorPermission:
+        "No permission to upload images. Check admin role or Storage RLS policy.",
+      uploadErrorInvalidKey:
+        "Filename has invalid characters. Rename it with simple letters/numbers/-/_.",
+      uploadErrorNetwork: "Network error while uploading. Please try again.",
+      uploadErrorGeneric: "Image upload failed",
       formTitleNew: "Add product",
       formTitleEdit: "Edit product",
       productNameField: "Product name",

@@ -14,10 +14,14 @@ import {
   looksLikeProductHtml,
   stripHtmlForPreview,
 } from "@/lib/product-description";
-import { PLACEHOLDER_PRODUCTS } from "@/lib/placeholder-products";
 import type { ProductRow } from "@/types/database";
 
-async function fetchProductsUncached(): Promise<ProductRow[]> {
+type ProductFetchState = {
+  products: ProductRow[];
+  maintenance: boolean;
+};
+
+async function fetchProductsUncached(): Promise<ProductFetchState> {
   try {
     const supabase = createClientWithoutCookies();
     const selectWithThumb =
@@ -57,29 +61,34 @@ async function fetchProductsUncached(): Promise<ProductRow[]> {
       });
     }
 
-    if (!firstError && first.data?.length) return first.data;
+    if (!firstError && first.data?.length) {
+      return { products: first.data, maintenance: false };
+    }
     if (!firstError && !first.data?.length) {
       console.warn(
         "[store] fetchProducts: no rows returned (is_active=true?)"
       );
+      return { products: [], maintenance: false };
     }
 
     // If thumbnail migration hasn't been applied yet, retry without `image_thumb_urls`.
     if (firstError && /image_thumb_urls/i.test(firstError)) {
       const retry = await load(false);
-      if (retry.data?.length) return retry.data;
+      if (retry.data?.length) {
+        return { products: retry.data, maintenance: false };
+      }
     }
 
-    return PLACEHOLDER_PRODUCTS;
+    return { products: [], maintenance: true };
   } catch (err) {
     console.warn("[store] fetchProducts: unexpected error", err);
-    return PLACEHOLDER_PRODUCTS;
+    return { products: [], maintenance: true };
   }
 }
 
 const fetchProducts = unstable_cache(fetchProductsUncached, ["active-products"], {
   // Dev: giảm để tránh "dính" placeholder do cache cũ.
-  // Prod: 60 giây để hạn chế stale UI sau khi admin cập nhật.
+   // Prod: 60 giây để hạn chế stale UI sau khi admin cập nhật.
   revalidate: process.env.NODE_ENV === "development" ? 10 : 60,
 });
 
@@ -121,7 +130,7 @@ export default async function StoreHomePage() {
   const t = (path: string, vars?: Record<string, string>) =>
     translateMsg(messages, path, vars);
 
-  const products = await fetchProducts();
+  const { products, maintenance } = await fetchProducts();
   const socialThreads =
     process.env.NEXT_PUBLIC_SOCIAL_THREADS_URL?.trim() ||
     "https://www.threads.net/@eolinhtinh";
@@ -138,6 +147,29 @@ export default async function StoreHomePage() {
 
   return (
     <div className="space-y-8 px-5 py-6 md:px-6">
+      {maintenance ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-5">
+          <div className="w-full max-w-md rounded-2xl border border-eoi-border bg-white p-5 shadow-xl">
+            <h2 className="font-syne text-xl font-bold text-eoi-ink">
+              Hệ thống đang bảo trì
+            </h2>
+            <p className="mt-2 font-dm text-sm text-eoi-ink2">
+              Cửa hàng đang cập nhật dữ liệu. Vui lòng quay lại sau hoặc liên hệ qua Instagram để được hỗ trợ nhanh.
+            </p>
+            <div className="mt-4">
+              <a
+                href={socialInstagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-eoi-blue px-5 font-dm text-sm font-semibold text-white"
+              >
+                Instagram @eolinhtinh
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <section
         className="relative aspect-[1103/316] w-full overflow-hidden rounded-2xl bg-eoi-ink md:aspect-[1103/316]"
         aria-label={t("store.heroVideoAria")}

@@ -85,6 +85,20 @@ function storageObjectStem(path: string): string {
   return i > 0 ? path.slice(0, i) : path;
 }
 
+function mapStorageUploadError(message: string, t: (path: string) => string): string {
+  const m = message.toLowerCase();
+  if (m.includes("row-level security") || m.includes("permission") || m.includes("unauthorized")) {
+    return t("admin.products.uploadErrorPermission");
+  }
+  if (m.includes("invalid key")) {
+    return t("admin.products.uploadErrorInvalidKey");
+  }
+  if (m.includes("network") || m.includes("fetch failed") || m.includes("timeout")) {
+    return t("admin.products.uploadErrorNetwork");
+  }
+  return `${t("admin.products.uploadErrorGeneric")} (${message})`;
+}
+
 export default function AdminProductFormPage() {
   const t = useTranslations();
   const params = useParams();
@@ -229,7 +243,15 @@ export default function AdminProductFormPage() {
         .from("product-images")
         .upload(path, file);
       if (upErr) {
-        setError(upErr.message);
+        const userMsg = mapStorageUploadError(upErr.message, t);
+        console.warn("[admin.products.upload] original upload failed", {
+          code: (upErr as { name?: string }).name,
+          message: upErr.message,
+          path,
+          fileType: file.type,
+          fileSize: file.size,
+        });
+        setError(userMsg);
         setUploading(false);
         return;
       }
@@ -250,6 +272,10 @@ export default function AdminProductFormPage() {
           } = supabase.storage.from("product-images").getPublicUrl(thumbPath);
           nextThumbs.push(thumbPublicUrl);
         } else {
+          console.warn("[admin.products.upload] thumbnail upload failed", {
+            message: upThumbErr.message,
+            thumbPath,
+          });
           // Fallback to original if thumbnail upload fails.
           nextThumbs.push(publicUrl);
         }
