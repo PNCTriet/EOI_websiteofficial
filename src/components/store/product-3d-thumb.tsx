@@ -307,7 +307,6 @@ export function Product3DThumb({ stlUrl, posterUrl }: Props) {
               failed ? "opacity-100" : loaded ? "opacity-90" : "opacity-100"
             }`}
             priority={false}
-            unoptimized
           />
         </div>
       ) : null}

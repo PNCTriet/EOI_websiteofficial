@@ -123,9 +123,11 @@ export default async function StoreHomePage() {
 
   const products = await fetchProducts();
   const socialThreads =
-    process.env.NEXT_PUBLIC_SOCIAL_THREADS_URL?.trim() || "";
+    process.env.NEXT_PUBLIC_SOCIAL_THREADS_URL?.trim() ||
+    "https://www.threads.net/@eolinhtinh";
   const socialInstagram =
-    process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL?.trim() || "";
+    process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL?.trim() ||
+    "https://www.instagram.com/eolinhtinh/";
   const availableCategoryIds = Array.from(
     new Set(
       products
@@ -149,6 +151,7 @@ export default async function StoreHomePage() {
           preload="auto"
           aria-hidden
         >
+          <source src="/image/video/thumnail.mp4" type="video/mp4" />
           <source src="/image/video/thumnail.MOV" type="video/quicktime" />
         </video>
         <div className="absolute inset-0 bg-black/55" aria-hidden />
@@ -158,34 +161,28 @@ export default async function StoreHomePage() {
             <p className="font-dm text-sm font-medium text-white/90">
               {t("store.heroVideoSocialTitle")}
             </p>
-            {(socialThreads || socialInstagram) && (
-              <div className="mt-1 flex flex-wrap items-center gap-3">
-                {socialThreads ? (
-                  <a
-                    href={socialThreads}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={t("store.heroSocialThreadsAria")}
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-eoi-pink px-4 py-2.5 font-dm text-sm font-bold text-white shadow-md transition hover:brightness-110"
-                  >
-                    <AtSign className="h-5 w-5 shrink-0" strokeWidth={2.2} aria-hidden />
-                    <span>{t("store.heroSocialThreadsLabel")}</span>
-                  </a>
-                ) : null}
-                {socialInstagram ? (
-                  <a
-                    href={socialInstagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={t("store.heroSocialInstagramAria")}
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-eoi-blue px-4 py-2.5 font-dm text-sm font-bold text-white shadow-md transition hover:brightness-110"
-                  >
-                    <Instagram className="h-5 w-5 shrink-0" strokeWidth={2.2} aria-hidden />
-                    <span>{t("store.heroSocialInstagramHandle")}</span>
-                  </a>
-                ) : null}
-              </div>
-            )}
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <a
+                href={socialThreads}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t("store.heroSocialThreadsAria")}
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-eoi-pink px-4 py-2.5 font-dm text-sm font-bold text-white shadow-md transition hover:brightness-110"
+              >
+                <AtSign className="h-5 w-5 shrink-0" strokeWidth={2.2} aria-hidden />
+                <span>{t("store.heroSocialThreadsLabel")}</span>
+              </a>
+              <a
+                href={socialInstagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t("store.heroSocialInstagramAria")}
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-eoi-blue px-4 py-2.5 font-dm text-sm font-bold text-white shadow-md transition hover:brightness-110"
+              >
+                <Instagram className="h-5 w-5 shrink-0" strokeWidth={2.2} aria-hidden />
+                <span>{t("store.heroSocialInstagramHandle")}</span>
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -259,6 +256,9 @@ export default async function StoreHomePage() {
                         fill
                         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                         className="object-cover object-center"
+                        priority={i < 4}
+                        loading={i < 4 ? "eager" : "lazy"}
+                        fetchPriority={i < 4 ? "high" : "auto"}
                       />
                     );
                   }
