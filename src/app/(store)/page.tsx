@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Instagram, Plus, AtSign } from "lucide-react";
-import { unstable_cache } from "next/cache";
 import { createClientWithoutCookies } from "@/lib/supabase/server";
 import { CategoryChips } from "@/components/category-chips";
 import { badgeLabel } from "@/i18n/badge-label";
@@ -20,6 +19,9 @@ type ProductFetchState = {
   products: ProductRow[];
   maintenance: boolean;
 };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 async function fetchProductsUncached(): Promise<ProductFetchState> {
   try {
@@ -86,12 +88,6 @@ async function fetchProductsUncached(): Promise<ProductFetchState> {
   }
 }
 
-const fetchProducts = unstable_cache(fetchProductsUncached, ["active-products"], {
-  // Dev: giảm để tránh "dính" placeholder do cache cũ.
-   // Prod: 60 giây để hạn chế stale UI sau khi admin cập nhật.
-  revalidate: process.env.NODE_ENV === "development" ? 10 : 60,
-});
-
 function badgeStyles(badge: string | null): string {
   if (!badge) return "hidden";
   const u = badge.trim().toLowerCase();
@@ -130,13 +126,9 @@ export default async function StoreHomePage() {
   const t = (path: string, vars?: Record<string, string>) =>
     translateMsg(messages, path, vars);
 
-  const { products, maintenance } = await fetchProducts();
-  const socialThreads =
-    process.env.NEXT_PUBLIC_SOCIAL_THREADS_URL?.trim() ||
-    "https://www.threads.net/@eolinhtinh";
-  const socialInstagram =
-    process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL?.trim() ||
-    "https://www.instagram.com/eolinhtinh/";
+  const { products, maintenance } = await fetchProductsUncached();
+  const socialThreads = "https://www.threads.net/@eolinhtinh";
+  const socialInstagram = "https://www.instagram.com/eolinhtinh/";
   const availableCategoryIds = Array.from(
     new Set(
       products

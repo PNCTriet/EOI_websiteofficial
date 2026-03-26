@@ -23,11 +23,25 @@ export function ProductImageGallery({
   const safeIndex = urls.length ? Math.min(active, urls.length - 1) : 0;
   const main = urls[safeIndex];
 
+  const isHeicLike = (url: string): boolean => {
+    const lower = url.split("?")[0]?.toLowerCase() ?? "";
+    return lower.endsWith(".heic") || lower.endsWith(".heif");
+  };
+
   const thumbFor = (i: number) => {
     if (thumbs.length === urls.length) return thumbs[i] ?? urls[i] ?? "";
     if (thumbs.length > 0) return thumbs[Math.min(i, thumbs.length - 1)] ?? urls[i] ?? "";
     return urls[i] ?? "";
   };
+
+  const mainDisplayUrl = (() => {
+    if (!main) return null;
+    if (isHeicLike(main)) {
+      const thumb = thumbFor(safeIndex);
+      if (thumb) return thumb;
+    }
+    return main;
+  })();
 
   return (
     <div className="w-full">
@@ -37,13 +51,16 @@ export function ProductImageGallery({
           background: accentBg ?? "var(--eoi-pink-light)",
         }}
       >
-        {main ? (
+        {mainDisplayUrl ? (
           <Image
-            src={main}
+            src={mainDisplayUrl}
             alt=""
             fill
             sizes="(max-width: 768px) 100vw, 640px"
             className="object-cover object-center"
+            priority
+            loading="eager"
+            fetchPriority="high"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
