@@ -16,12 +16,18 @@ import type { ProductRow } from "@/types/database";
 
 function normalizeBadgeForForm(b: string | null | undefined): string {
   if (!b?.trim()) return "";
-  const u = b.trim();
-  const lower = u.toLowerCase();
-  if (lower === "hot") return "Hot";
-  if (lower === "mới" || lower === "moi" || lower === "new") return "New";
-  if (lower === "sale") return "Sale";
-  return u;
+  return b
+    .split(/[,\n;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((u) => {
+      const lower = u.toLowerCase();
+      if (lower === "hot") return "Hot";
+      if (lower === "mới" || lower === "moi" || lower === "new") return "New";
+      if (lower === "sale") return "Sale";
+      return u;
+    })
+    .join(", ");
 }
 
 function normalizeColorInput(s: string): string | null {
@@ -34,6 +40,49 @@ function normalizeColorInput(s: string): string | null {
     return `#${r}${r}${g}${g}${b}${b}`.toUpperCase();
   }
   return null;
+}
+
+/** iOS/ảnh đôi khi không có đuôi trong file.name → Storage URL không có .jpg/.png, Next/Image & CDN dễ lỗi. */
+function extFromImageMime(mime: string): string {
+  const m: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/heic": "heic",
+    "image/heif": "heif",
+    "image/avif": "avif",
+  };
+  return m[mime.toLowerCase()] ?? "jpg";
+}
+
+function ensureFilenameHasImageExtension(name: string, mime: string): string {
+  const n = name.trim();
+  if (/\.[a-z0-9]{2,8}$/i.test(n)) return n;
+  return `${n}.${extFromImageMime(mime)}`;
+}
+
+/** Supabase Storage key cannot include some special chars (e.g. []()). */
+function sanitizeStorageFilename(name: string): string {
+  const trimmed = name.trim();
+  const i = trimmed.lastIndexOf(".");
+  const base = i > 0 ? trimmed.slice(0, i) : trimmed;
+  const ext = i > 0 ? trimmed.slice(i + 1) : "";
+
+  const safeBase = base
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[-_.]+|[-_.]+$/g, "");
+
+  const safeExt = ext.replace(/[^a-zA-Z0-9]+/g, "").toLowerCase();
+  const finalBase = safeBase || "image";
+  return safeExt ? `${finalBase}.${safeExt}` : finalBase;
+}
+
+function storageObjectStem(path: string): string {
+  const i = path.lastIndexOf(".");
+  return i > 0 ? path.slice(0, i) : path;
 }
 
 export default function AdminProductFormPage() {
@@ -172,7 +221,10 @@ export default function AdminProductFormPage() {
         setUploading(false);
         return;
       }
-      const path = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+      const safeName = sanitizeStorageFilename(
+        ensureFilenameHasImageExtension(file.name.replace(/\s+/g, "-"), file.type)
+      );
+      const path = `${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage
         .from("product-images")
         .upload(path, file);
@@ -188,7 +240,7 @@ export default function AdminProductFormPage() {
 
       const thumbBlob = await makeThumbnailBlob(file);
       if (thumbBlob) {
-        const thumbPath = `thumb-${path}`;
+        const thumbPath = `thumb-${storageObjectStem(path)}.jpg`;
         const { error: upThumbErr } = await supabase.storage
           .from("product-images")
           .upload(thumbPath, thumbBlob, { contentType: "image/jpeg" });
@@ -287,7 +339,7 @@ export default function AdminProductFormPage() {
       image_thumb_urls: imageThumbUrls.length ? imageThumbUrls : null,
       category: categoryResolved,
       material: material.trim() || null,
-      badge: badge.trim() || null,
+      badge: normalizeBadgeForForm(badge) || null,
       colors: normalizedColors.length ? normalizedColors : null,
       delivery_days_min: dMin,
       delivery_days_max: dMax,
@@ -489,16 +541,15 @@ export default function AdminProductFormPage() {
           <label className="font-dm text-xs font-medium text-eoi-ink2">
             {t("admin.products.badge")}
           </label>
-          <select
+          <input
             value={badge}
             onChange={(e) => setBadge(e.target.value)}
+            placeholder={t("admin.products.badgePlaceholder")}
             className={inputClass}
-          >
-            <option value="">{t("admin.products.badgeNone")}</option>
-            <option value="Hot">{t("badges.hot")}</option>
-            <option value="New">{t("badges.new")}</option>
-            <option value="Sale">{t("badges.sale")}</option>
-          </select>
+          />
+          <p className="mt-1 font-dm text-[11px] text-eoi-ink2/80">
+            {t("admin.products.badgeHint")}
+          </p>
         </div>
 
         <div>

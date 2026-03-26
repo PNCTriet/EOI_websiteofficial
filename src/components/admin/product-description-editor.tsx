@@ -37,13 +37,19 @@ function MenuBar({ editor }: { editor: Editor | null }) {
       "https://www.youtube.com/watch?v="
     );
     if (!url) return;
+
+    // Auto-detect vertical videos (YouTube Shorts) and store portrait frame.
+    const isShorts = /youtube\.com\/shorts\//i.test(url);
+    const width = isShorts ? 360 : 640;
+    const height = isShorts ? 640 : 360;
+
     editor
       .chain()
       .focus()
       .setYoutubeVideo({
         src: url,
-        width: 640,
-        height: 360,
+        width,
+        height,
       })
       .run();
   };

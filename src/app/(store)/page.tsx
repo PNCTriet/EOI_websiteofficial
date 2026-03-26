@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Plus } from "lucide-react";
+import { Instagram, Plus, AtSign } from "lucide-react";
 import { unstable_cache } from "next/cache";
 import { createClientWithoutCookies } from "@/lib/supabase/server";
 import { CategoryChips } from "@/components/category-chips";
@@ -94,6 +94,14 @@ function badgeStyles(badge: string | null): string {
   return "bg-eoi-border text-eoi-ink2";
 }
 
+function parseBadgeTags(badge: string | null): string[] {
+  if (!badge?.trim()) return [];
+  return badge
+    .split(/[,\n;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
 function availabilityPillClass(av: string | undefined): string {
   if (av === "coming_soon")
     return "bg-violet-100 text-violet-800";
@@ -105,6 +113,7 @@ function addButtonColor(i: number): string {
   const colors = ["bg-eoi-pink", "bg-eoi-blue", "bg-eoi-amber"];
   return colors[i % colors.length] ?? "bg-eoi-pink";
 }
+
 
 export default async function StoreHomePage() {
   const locale = await getLocale();
@@ -156,9 +165,11 @@ export default async function StoreHomePage() {
                     href={socialThreads}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/35 bg-white/10 px-5 font-dm text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                    aria-label={t("store.heroSocialThreadsAria")}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-eoi-pink px-4 py-2.5 font-dm text-sm font-bold text-white shadow-md transition hover:brightness-110"
                   >
-                    {t("store.heroSocialThreads")}
+                    <AtSign className="h-5 w-5 shrink-0" strokeWidth={2.2} aria-hidden />
+                    <span>{t("store.heroSocialThreadsLabel")}</span>
                   </a>
                 ) : null}
                 {socialInstagram ? (
@@ -166,9 +177,11 @@ export default async function StoreHomePage() {
                     href={socialInstagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/35 bg-white/10 px-5 font-dm text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                    aria-label={t("store.heroSocialInstagramAria")}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-eoi-blue px-4 py-2.5 font-dm text-sm font-bold text-white shadow-md transition hover:brightness-110"
                   >
-                    {t("store.heroSocialInstagram")}
+                    <Instagram className="h-5 w-5 shrink-0" strokeWidth={2.2} aria-hidden />
+                    <span>{t("store.heroSocialInstagramHandle")}</span>
                   </a>
                 ) : null}
               </div>
@@ -200,7 +213,8 @@ export default async function StoreHomePage() {
                   const avail = p.availability ?? "in_stock";
                   const showAvail =
                     avail === "coming_soon" || avail === "out_of_stock";
-                  if (!showAvail && !p.badge) return null;
+                  const badgeTags = parseBadgeTags(p.badge);
+                  if (!showAvail && badgeTags.length === 0) return null;
                   return (
                     <div className="absolute left-3 top-3 z-[50] flex max-w-[calc(100%-1.5rem)] flex-col items-start gap-1">
                       {avail === "coming_soon" ? (
@@ -217,13 +231,14 @@ export default async function StoreHomePage() {
                           {t("store.availabilityOutOfStock")}
                         </span>
                       ) : null}
-                      {p.badge ? (
+                      {badgeTags.map((tag, idx) => (
                         <span
-                          className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 leading-tight font-dm text-[10px] font-bold uppercase tracking-wide ${badgeStyles(p.badge)}`}
+                          key={`${p.id}-badge-${idx}-${tag}`}
+                          className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 leading-tight font-dm text-[10px] font-bold uppercase tracking-wide ${badgeStyles(tag)}`}
                         >
-                          {badgeLabel(messages, p.badge)}
+                          {badgeLabel(messages, tag)}
                         </span>
-                      ) : null}
+                      ))}
                     </div>
                   );
                 })()}

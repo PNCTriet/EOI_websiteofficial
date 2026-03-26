@@ -105,6 +105,11 @@ body {
   border-radius: 10px;
   margin: 0.6em 0;
 }
+.product-description iframe[height="640"] {
+  aspect-ratio: 9 / 16;
+  min-height: 0;
+  max-height: 72svh;
+}
 
 /* TipTap admin editor */
 .tiptap-prose p {
@@ -129,4 +134,9 @@ body {
   min-height: 220px;
   border: 0;
   border-radius: 10px;
+}
+.tiptap-prose iframe[height="640"] {
+  aspect-ratio: 9 / 16;
+  min-height: 0;
+  max-height: 72svh;
 }

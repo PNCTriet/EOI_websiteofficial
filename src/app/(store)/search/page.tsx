@@ -23,6 +23,14 @@ function badgeStyles(badge: string | null): string {
   return "bg-eoi-border text-eoi-ink2";
 }
 
+function parseBadgeTags(badge: string | null): string[] {
+  if (!badge?.trim()) return [];
+  return badge
+    .split(/[,\n;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
 function availabilityPillClass(av: string | undefined): string {
   if (av === "coming_soon") return "bg-violet-100 text-violet-800";
   if (av === "out_of_stock") return "bg-neutral-200 text-neutral-700";
@@ -117,6 +125,7 @@ export default async function SearchPage({ searchParams }: Props) {
             const poster = p.image_thumb_urls?.[0] ?? p.image_urls?.[0] ?? null;
             const avail = p.availability ?? "in_stock";
             const showAvail = avail === "coming_soon" || avail === "out_of_stock";
+            const badgeTags = parseBadgeTags(p.badge);
             return (
               <Link
                 key={p.id}
@@ -127,7 +136,7 @@ export default async function SearchPage({ searchParams }: Props) {
                   className="relative aspect-[4/5] w-full overflow-hidden rounded-t-2xl"
                   style={{ background: p.accent_bg ?? "var(--eoi-pink-light)" }}
                 >
-                  {showAvail || p.badge ? (
+                  {showAvail || badgeTags.length > 0 ? (
                     <div className="absolute left-3 top-3 z-[50] flex max-w-[calc(100%-1.5rem)] flex-col items-start gap-1">
                       {avail === "coming_soon" ? (
                         <span
@@ -147,15 +156,16 @@ export default async function SearchPage({ searchParams }: Props) {
                           {t(messages, "store.availabilityOutOfStock")}
                         </span>
                       ) : null}
-                      {p.badge ? (
+                      {badgeTags.map((tag, idx) => (
                         <span
+                          key={`${p.id}-badge-${idx}-${tag}`}
                           className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 leading-tight font-dm text-[10px] font-bold uppercase tracking-wide ${badgeStyles(
-                            p.badge
+                            tag
                           )}`}
                         >
-                          {badgeLabel(messages, p.badge)}
+                          {badgeLabel(messages, tag)}
                         </span>
-                      ) : null}
+                      ))}
                     </div>
                   ) : null}
 
