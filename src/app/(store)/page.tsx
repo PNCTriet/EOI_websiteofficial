@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { unstable_cache } from "next/cache";
 import { createClientWithoutCookies } from "@/lib/supabase/server";
 import { CategoryChips } from "@/components/category-chips";
@@ -9,6 +9,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { t as translateMsg } from "@/i18n/translate";
 import { formatProductPrice } from "@/lib/format-locale";
 import { getLocale } from "@/lib/locale";
+import { Product3DThumb } from "@/components/store/product-3d-thumb";
 import {
   looksLikeProductHtml,
   stripHtmlForPreview,
@@ -89,7 +90,8 @@ function badgeStyles(badge: string | null): string {
   if (u === "mới" || u === "moi" || u === "new")
     return "bg-eoi-blue-light text-eoi-blue-dark";
   if (u === "sale") return "bg-eoi-amber-light text-eoi-amber-dark";
-  return "hidden";
+  // Any other custom tag from DB (e.g. "Design Lamp") should still be visible.
+  return "bg-eoi-border text-eoi-ink2";
 }
 
 function availabilityPillClass(av: string | undefined): string {
@@ -111,42 +113,72 @@ export default async function StoreHomePage() {
     translateMsg(messages, path, vars);
 
   const products = await fetchProducts();
+  const socialThreads =
+    process.env.NEXT_PUBLIC_SOCIAL_THREADS_URL?.trim() || "";
+  const socialInstagram =
+    process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL?.trim() || "";
+  const availableCategoryIds = Array.from(
+    new Set(
+      products
+        .map((p) => p.category)
+        .filter((c): c is string => typeof c === "string" && c.trim().length > 0)
+    )
+  );
 
   return (
     <div className="space-y-8 px-5 py-6 md:px-6">
-      <section className="relative overflow-hidden rounded-2xl bg-eoi-ink px-5 py-8 md:px-8 md:py-10">
-        <div className="relative z-10 max-w-lg">
-          <span className="inline-block rounded-full bg-eoi-pink px-3 py-1 font-dm text-[10px] font-bold uppercase tracking-wide text-white">
-            {t("store.heroEyebrow")}
-          </span>
-          <h1 className="mt-4 font-syne text-3xl font-extrabold leading-tight tracking-[-1px] text-white md:text-4xl">
-            {t("store.heroTitleBefore")}
-            <span className="text-eoi-amber">{t("store.heroTitleAccent")}</span>
-            {t("store.heroTitleAfter")}
-          </h1>
-          <p className="mt-3 max-w-sm font-dm text-sm font-normal leading-snug text-[#aaaaaa] line-clamp-2">
-            {t("store.heroDescription")}
-          </p>
-          <Link
-            href="/#noi-bat"
-            className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-eoi-pink px-5 py-3 font-dm text-sm font-semibold text-white"
-          >
-            {t("store.exploreNow")}
-            <ArrowRight size={18} strokeWidth={2} aria-hidden />
-          </Link>
+      <section
+        className="relative aspect-[1103/316] w-full overflow-hidden rounded-2xl bg-eoi-ink md:aspect-[1103/316]"
+        aria-label={t("store.heroVideoAria")}
+      >
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden
+        >
+          <source src="/image/video/thumnail.MOV" type="video/quicktime" />
+        </video>
+        <div className="absolute inset-0 bg-black/55" aria-hidden />
+
+        <div className="absolute inset-0 z-10 flex flex-col justify-end">
+          <div className="flex flex-col gap-3 p-5 pb-6 md:p-8 md:pb-8">
+            <p className="font-dm text-sm font-medium text-white/90">
+              {t("store.heroVideoSocialTitle")}
+            </p>
+            {(socialThreads || socialInstagram) && (
+              <div className="mt-1 flex flex-wrap items-center gap-3">
+                {socialThreads ? (
+                  <a
+                    href={socialThreads}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/35 bg-white/10 px-5 font-dm text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                  >
+                    {t("store.heroSocialThreads")}
+                  </a>
+                ) : null}
+                {socialInstagram ? (
+                  <a
+                    href={socialInstagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/35 bg-white/10 px-5 font-dm text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                  >
+                    {t("store.heroSocialInstagram")}
+                  </a>
+                ) : null}
+              </div>
+            )}
+          </div>
         </div>
-        <div
-          className="pointer-events-none absolute -right-8 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-eoi-blue opacity-20 blur-3xl"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute right-12 top-4 h-28 w-28 rounded-full bg-eoi-amber opacity-25 blur-2xl"
-          aria-hidden
-        />
       </section>
 
       <section aria-label={t("store.categoriesSectionAria")}>
-        <CategoryChips />
+        <CategoryChips availableCategoryIds={availableCategoryIds} />
       </section>
 
       <section id="noi-bat" className="scroll-mt-24">
@@ -158,7 +190,7 @@ export default async function StoreHomePage() {
             <Link
               key={p.id}
               href={`/products/${p.id}`}
-              className="group block rounded-2xl border border-eoi-border bg-eoi-surface"
+              className="group block rounded-2xl border border-eoi-border bg-eoi-surface transition-transform duration-300 will-change-transform md:hover:scale-[1.02]"
             >
               <div
                 className="relative aspect-[4/5] w-full overflow-hidden rounded-t-2xl"
@@ -170,24 +202,24 @@ export default async function StoreHomePage() {
                     avail === "coming_soon" || avail === "out_of_stock";
                   if (!showAvail && !p.badge) return null;
                   return (
-                    <div className="absolute left-2 top-2 z-[1] flex max-w-[calc(100%-1rem)] flex-col items-start gap-1">
+                    <div className="absolute left-3 top-3 z-[50] flex max-w-[calc(100%-1.5rem)] flex-col items-start gap-1">
                       {avail === "coming_soon" ? (
                         <span
-                          className={`rounded-full px-2 py-1 font-dm text-[10px] font-bold uppercase tracking-wide ${availabilityPillClass("coming_soon")}`}
+                          className={`inline-flex items-center rounded-full px-2 py-1 leading-tight font-dm text-[10px] font-bold uppercase tracking-wide ${availabilityPillClass("coming_soon")}`}
                         >
                           {t("store.availabilityComingSoon")}
                         </span>
                       ) : null}
                       {avail === "out_of_stock" ? (
                         <span
-                          className={`rounded-full px-2 py-1 font-dm text-[10px] font-bold uppercase tracking-wide ${availabilityPillClass("out_of_stock")}`}
+                          className={`inline-flex items-center rounded-full px-2 py-1 leading-tight font-dm text-[10px] font-bold uppercase tracking-wide ${availabilityPillClass("out_of_stock")}`}
                         >
                           {t("store.availabilityOutOfStock")}
                         </span>
                       ) : null}
                       {p.badge ? (
                         <span
-                          className={`rounded-full px-2 py-1 font-dm text-[10px] font-bold uppercase tracking-wide ${badgeStyles(p.badge)}`}
+                          className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 leading-tight font-dm text-[10px] font-bold uppercase tracking-wide ${badgeStyles(p.badge)}`}
                         >
                           {badgeLabel(messages, p.badge)}
                         </span>
@@ -195,21 +227,35 @@ export default async function StoreHomePage() {
                     </div>
                   );
                 })()}
-                {(p.image_thumb_urls?.[0] ?? p.image_urls?.[0]) ? (
-                  <Image
-                    src={p.image_thumb_urls?.[0] ?? p.image_urls?.[0] ?? ""}
-                    alt=""
-                    fill
-                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                    className="object-cover object-center"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <span className="font-syne text-2xl font-extrabold text-eoi-ink/20">
-                      3D
-                    </span>
-                  </div>
-                )}
+                {(() => {
+                  const poster = p.image_thumb_urls?.[0] ?? p.image_urls?.[0] ?? null;
+                  const stl = p.stl_url;
+                  if (stl) {
+                    return (
+                      <Product3DThumb stlUrl={stl} posterUrl={poster} />
+                    );
+                  }
+
+                  if (poster) {
+                    return (
+                      <Image
+                        src={poster}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                        className="object-cover object-center"
+                      />
+                    );
+                  }
+
+                  return (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <span className="font-syne text-2xl font-extrabold text-eoi-ink/20">
+                        3D
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="p-3">
                 <p className="font-syne text-[13px] font-bold leading-tight text-eoi-ink line-clamp-2">

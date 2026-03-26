@@ -135,7 +135,9 @@ export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expires
           </p>
           <p>
             {t("store.checkoutPendingStatus")}:{" "}
-            <span className="font-semibold text-eoi-ink">{stage}</span>
+            <span className="font-semibold text-eoi-ink">
+              {t(`stages.${stage === "pending" ? "pending_payment" : stage}`)}
+            </span>
           </p>
           <p>
             {t("store.checkoutPendingTimeLeft")}{" "}

@@ -85,21 +85,21 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
             name="email_display"
             value={userInfo.email}
             readOnly
-            placeholder="Email"
+            placeholder={t("store.checkoutEmailPlaceholder")}
             className="rounded-[10px] border border-eoi-border bg-eoi-surface px-3 py-2 font-dm text-sm md:col-span-2"
           />
           <input
             name="recipient_name"
             required
             defaultValue={initialAddress.recipient_name ?? userInfo.fullName}
-            placeholder="Recipient name"
+            placeholder={t("store.checkoutRecipientNamePlaceholder")}
             className="rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm"
           />
           <input
             name="phone"
             required
             defaultValue={initialAddress.phone ?? ""}
-            placeholder="Phone"
+            placeholder={t("store.checkoutPhonePlaceholder")}
             className="rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm"
           />
           <input
@@ -117,7 +117,7 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
                 .then((r) => r.json())
                 .then((d: { suggestions?: Suggestion[] }) => setStreetSug(d.suggestions ?? []));
             }}
-            placeholder="Street"
+            placeholder={t("store.checkoutStreetPlaceholder")}
             className="rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm md:col-span-2"
           />
           {streetSug.length > 0 ? (
@@ -145,7 +145,7 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
             required
             value={ward}
             onChange={(e) => setWard(e.target.value)}
-            placeholder="Ward"
+            placeholder={t("store.checkoutWardPlaceholder")}
             className="rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm"
           />
           <input
@@ -163,7 +163,7 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
                 .then((r) => r.json())
                 .then((d: { suggestions?: Suggestion[] }) => setDistrictSug(d.suggestions ?? []));
             }}
-            placeholder="District"
+            placeholder={t("store.checkoutDistrictPlaceholder")}
             className="rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm"
           />
           {districtSug.length > 0 ? (
@@ -199,7 +199,7 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
                 .then((r) => r.json())
                 .then((d: { suggestions?: Suggestion[] }) => setProvinceSug(d.suggestions ?? []));
             }}
-            placeholder="Province"
+            placeholder={t("store.checkoutProvincePlaceholder")}
             className="rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm md:col-span-2"
           />
           {provinceSug.length > 0 ? (
@@ -221,7 +221,7 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
           ) : null}
           <textarea
             name="note"
-            placeholder="Note (optional)"
+            placeholder={t("store.checkoutNoteOptionalPlaceholder")}
             className="min-h-[90px] rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm md:col-span-2"
           />
         </div>
@@ -233,7 +233,7 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
             checked={saveAddress}
             onChange={(e) => setSaveAddress(e.target.checked)}
           />
-          Save as default address
+          {t("store.checkoutSaveAddressLabel")}
         </label>
         {error ? <p className="font-dm text-sm text-red-600">{error}</p> : null}
         <button
@@ -241,7 +241,7 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
           disabled={pending || items.length === 0}
           className="min-h-[44px] w-full rounded-full bg-eoi-ink px-4 py-3 font-dm text-sm font-semibold text-white disabled:opacity-60"
         >
-          {pending ? t("admin.products.saving") : "Create order"}
+          {pending ? t("admin.products.saving") : t("store.checkoutCreateOrder")}
         </button>
       </form>
 

@@ -621,11 +621,18 @@ export default function AdminProductFormPage() {
             {t("admin.products.stlUrl")} ({t("admin.products.stlOptional")})
           </label>
           <input
-            type="url"
+            type="text"
+            inputMode="url"
+            autoComplete="off"
+            placeholder="/stl/example.stl"
             value={stlUrl}
             onChange={(e) => setStlUrl(e.target.value)}
             className={inputClass}
+            aria-describedby="stl-url-hint"
           />
+          <p id="stl-url-hint" className="mt-1 font-dm text-[11px] text-eoi-ink2/80">
+            {t("admin.products.stlUrlHint")}
+          </p>
         </div>
 
         <div className="flex items-center gap-3">

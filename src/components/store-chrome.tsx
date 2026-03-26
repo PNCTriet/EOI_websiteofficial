@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { House, Search, ShoppingBag, User } from "lucide-react";
 import { EoiLogo } from "@/components/eoi-logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -50,6 +50,8 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
   const t = useTranslations();
   const { itemCount, mounted: cartMounted } = useCart();
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const cartCount = cartMounted ? itemCount : 0;
   const isHome = pathname === "/";
   const isSearch = pathname === "/search";
@@ -77,6 +79,18 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
     };
   }, []);
 
+  useEffect(() => {
+    function onDocDown(e: MouseEvent) {
+      const el = menuRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocDown);
+    return () => document.removeEventListener("mousedown", onDocDown);
+  }, []);
+
   return (
     <div className="min-h-dvh bg-eoi-bg pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
       <header className="sticky top-0 z-40 border-b-[1.5px] border-eoi-bg bg-white px-5 py-3 md:px-6">
@@ -89,29 +103,6 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
             <EoiLogo heightClass="h-[5.25rem]" priority />
           </Link>
           <div className="flex items-center gap-2">
-            {isHome ? <LanguageSwitcher /> : null}
-            <Link
-              href="/track"
-              className="hidden min-h-[44px] items-center font-dm text-xs font-medium text-eoi-ink2 hover:text-eoi-ink md:inline-flex"
-            >
-              {t("nav.trackOrder")}
-            </Link>
-            {userEmail ? (
-              <Link
-                href="/account"
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-eoi-border bg-white font-dm text-sm font-semibold text-eoi-ink"
-                aria-label={t("nav.account")}
-              >
-                {shortName ?? "U"}
-              </Link>
-            ) : (
-              <Link
-                href={`/login?next=${encodeURIComponent(pathname || "/")}`}
-                className="inline-flex min-h-[44px] items-center rounded-full border border-eoi-border px-4 font-dm text-sm font-medium text-eoi-ink"
-              >
-                {t("nav.login")}
-              </Link>
-            )}
             <Link
               href="/search"
               className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-eoi-ink"
@@ -131,6 +122,67 @@ export default function StoreChrome({ children }: { children: React.ReactNode })
                 </span>
               ) : null}
             </Link>
+
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-eoi-border bg-white"
+                aria-label="Account menu"
+                aria-expanded={menuOpen}
+              >
+                <User size={22} strokeWidth={1.8} className="text-eoi-ink" />
+              </button>
+
+              {menuOpen ? (
+                <div className="absolute right-0 mt-2 w-[260px] rounded-2xl border border-eoi-border bg-white p-3 shadow-lg">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-dm text-xs font-semibold text-eoi-ink2">
+                        {userEmail
+                          ? userEmail
+                          : t("store.accountGuest")}
+                      </p>
+                    </div>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-eoi-surface">
+                      <span className="font-dm text-sm font-bold text-eoi-ink">
+                        {shortName ?? "U"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <LanguageSwitcher className="w-full justify-center" />
+                    <Link
+                      href="/track"
+                      className="flex items-center justify-center rounded-full border border-eoi-border px-4 py-2 font-dm text-sm font-semibold text-eoi-ink2 hover:bg-eoi-surface"
+                    >
+                      {t("nav.trackOrder")}
+                    </Link>
+
+                    {userEmail ? (
+                      <Link
+                        href="/account"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center justify-center rounded-full bg-eoi-ink px-4 py-2 font-dm text-sm font-semibold text-white"
+                      >
+                        {t("nav.account")}
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/login?next=${encodeURIComponent(
+                          pathname || "/"
+                        )}`}
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center justify-center rounded-full bg-eoi-ink px-4 py-2 font-dm text-sm font-semibold text-white"
+                      >
+                        {t("nav.login")}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </header>
