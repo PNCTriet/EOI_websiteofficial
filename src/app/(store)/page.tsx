@@ -127,8 +127,8 @@ export default async function StoreHomePage() {
     translateMsg(messages, path, vars);
 
   const { products, maintenance } = await fetchProductsUncached();
-  const socialThreads = "https://www.threads.net/@eolinhtinh";
-  const socialInstagram = "https://www.instagram.com/eolinhtinh/";
+  const socialThreads = "https://www.threads.com/@eoilinhtinh";
+  const socialInstagram = "https://www.instagram.com/eoilinhtinh/";
   const availableCategoryIds = Array.from(
     new Set(
       products
