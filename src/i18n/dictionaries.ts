@@ -3,7 +3,7 @@ import type { Locale } from "./config";
 const vi = {
   meta: {
     title: "EOI - Design Printing",
-    description: "Của hàng linh tinh",
+    description: "Cửa hàng linh tinh",
   },
   common: {
     loading: "Đang tải…",

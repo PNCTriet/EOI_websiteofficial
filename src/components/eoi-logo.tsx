@@ -24,6 +24,7 @@ export function EoiLogo({
       width={200}
       height={64}
       priority={priority}
+      unoptimized
       className={`w-auto object-contain object-left ${heightClass} ${className}`}
     />
   );

@@ -30,6 +30,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const d = getDictionary(locale);
   const base = siteOrigin();
+  /** Luôn dùng URL tuyệt đối tới file tĩnh — tránh Facebook fallback sang `<Image>` đầu trang (logo transparent qua /_next/image). */
+  const ogImageAbsolute = new URL(brandAssets.ogImage, base).href;
+  const homeUrl = new URL("/", base).href;
+
   return {
     metadataBase: base,
     title: d.meta.title,
@@ -42,15 +46,18 @@ export async function generateMetadata(): Promise<Metadata> {
       apple: brandAssets.appleTouchIcon,
     },
     openGraph: {
+      type: "website",
+      url: homeUrl,
+      siteName: "EOI - Design Printing",
       title: d.meta.title,
       description: d.meta.description,
-      images: [{ url: brandAssets.ogImage }],
+      images: [{ url: ogImageAbsolute, alt: d.meta.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: d.meta.title,
       description: d.meta.description,
-      images: [brandAssets.ogImage],
+      images: [ogImageAbsolute],
     },
   };
 }
