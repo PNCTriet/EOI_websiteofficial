@@ -3,20 +3,10 @@ import { Inter } from "next/font/google";
 import { LocaleProvider } from "@/components/locale-provider";
 import { getDictionary } from "@/i18n/dictionaries";
 import { brandAssets } from "@/lib/brand-assets";
+import { getSiteOriginUrl, toAbsoluteSiteUrl } from "@/lib/site-url";
 import { getLocale } from "@/lib/locale";
 import "./globals.css";
 import { WebVitalsClient } from "@/components/web-vitals-client";
-
-function siteOrigin(): URL {
-  const raw =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
-  try {
-    return new URL(raw ?? "http://localhost:3000");
-  } catch {
-    return new URL("http://localhost:3000");
-  }
-}
 
 /** Inter — font phổ thông, hỗ trợ tiếng Việt */
 const inter = Inter({
@@ -29,9 +19,8 @@ const inter = Inter({
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const d = getDictionary(locale);
-  const base = siteOrigin();
-  /** Luôn dùng URL tuyệt đối tới file tĩnh — tránh Facebook fallback sang `<Image>` đầu trang (logo transparent qua /_next/image). */
-  const ogImageAbsolute = new URL(brandAssets.ogImage, base).href;
+  const base = getSiteOriginUrl();
+  const ogImageAbsolute = toAbsoluteSiteUrl(brandAssets.ogImage);
   const homeUrl = new URL("/", base).href;
 
   return {
@@ -51,7 +40,13 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "EOI - Design Printing",
       title: d.meta.title,
       description: d.meta.description,
-      images: [{ url: ogImageAbsolute, alt: d.meta.title }],
+      images: [
+        {
+          url: ogImageAbsolute,
+          type: "image/png",
+          alt: d.meta.title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",

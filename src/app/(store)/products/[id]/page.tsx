@@ -17,22 +17,12 @@ import { getLocale } from "@/lib/locale";
 import { storeCategoryLabel } from "@/lib/product-taxonomy";
 import type { ProductRow } from "@/types/database";
 import { brandAssets } from "@/lib/brand-assets";
+import { getSiteOriginString, toAbsoluteSiteUrl } from "@/lib/site-url";
 import { stripHtmlForPreview } from "@/lib/product-description";
 
 type Props = { params: Promise<{ id: string }> };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-function siteOrigin(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
-  try {
-    return new URL(raw ?? "http://localhost:3000").origin;
-  } catch {
-    return "http://localhost:3000";
-  }
-}
 
 type ProductFetchState = {
   product: ProductRow | null;
@@ -99,7 +89,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await getLocale();
   const messages = getDictionary(locale);
   const tr = (path: string, vars?: Record<string, string>) => t(messages, path, vars);
-  const origin = siteOrigin();
+  const origin = getSiteOriginString();
   const productUrl = `${origin}/products/${id}`;
   const { product, maintenance } = await getProduct(id);
 
@@ -117,13 +107,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         url: productUrl,
         siteName: "EOI - Design Printing",
-        images: [{ url: brandAssets.ogImage }],
+        images: [{ url: toAbsoluteSiteUrl(brandAssets.ogImage), type: "image/png" }],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [brandAssets.ogImage],
+        images: [toAbsoluteSiteUrl(brandAssets.ogImage)],
       },
     };
   }
@@ -141,24 +131,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         url: productUrl,
         siteName: "EOI - Design Printing",
-        images: [{ url: brandAssets.ogImage }],
+        images: [{ url: toAbsoluteSiteUrl(brandAssets.ogImage), type: "image/png" }],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [brandAssets.ogImage],
+        images: [toAbsoluteSiteUrl(brandAssets.ogImage)],
       },
     };
   }
 
-  const image = product.image_thumb_urls?.[0] ?? product.image_urls?.[0] ?? brandAssets.ogImage;
+  const image =
+    product.image_thumb_urls?.[0] ?? product.image_urls?.[0] ?? brandAssets.ogImage;
   const title = `${product.name} | EOI`;
   const descriptionRaw = product.description?.trim()
     ? stripHtmlForPreview(product.description)
     : tr("store.productDefaultDescription");
   const description =
     descriptionRaw.length > 180 ? `${descriptionRaw.slice(0, 177).trimEnd()}...` : descriptionRaw;
+
+  const imageForMeta = toAbsoluteSiteUrl(image);
 
   return {
     title,
@@ -170,13 +163,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       url: productUrl,
       siteName: "EOI - Design Printing",
-      images: [{ url: image }],
+      images: [{ url: imageForMeta }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      images: [imageForMeta],
     },
   };
 }
@@ -225,18 +218,11 @@ export default async function ProductDetailPage({ params }: Props) {
     ? product.availability
     : defaultAvailability();
 
-  const origin = (() => {
-    const raw =
-      process.env.NEXT_PUBLIC_SITE_URL ??
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
-    try {
-      return new URL(raw ?? "http://localhost:3000").origin;
-    } catch {
-      return "http://localhost:3000";
-    }
-  })();
+  const origin = getSiteOriginString();
 
-  const firstImage = product.image_urls?.[0] ?? brandAssets.ogImage;
+  const firstImage = toAbsoluteSiteUrl(
+    product.image_urls?.[0] ?? brandAssets.ogImage,
+  );
   const schemaAvailability =
     availability === "in_stock"
       ? "https://schema.org/InStock"
