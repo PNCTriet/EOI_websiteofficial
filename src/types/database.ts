@@ -82,6 +82,50 @@ export type Database = {
         };
         Relationships: [];
       };
+      product_variants: {
+        Row: {
+          id: string;
+          product_id: string;
+          label: string;
+          sort_order: number;
+          color_hex: string | null;
+          image_urls: string[];
+          image_thumb_urls: string[];
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          label: string;
+          sort_order?: number;
+          color_hex?: string | null;
+          image_urls?: string[];
+          image_thumb_urls?: string[];
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          label?: string;
+          sort_order?: number;
+          color_hex?: string | null;
+          image_urls?: string[];
+          image_thumb_urls?: string[];
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       carts: {
         Row: {
           id: string;
@@ -108,9 +152,8 @@ export type Database = {
           id: string;
           cart_id: string;
           product_id: string;
+          variant_id: string;
           quantity: number;
-          color_index: number;
-          color_hex: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -118,9 +161,8 @@ export type Database = {
           id?: string;
           cart_id: string;
           product_id: string;
+          variant_id: string;
           quantity: number;
-          color_index?: number;
-          color_hex?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -128,9 +170,8 @@ export type Database = {
           id?: string;
           cart_id?: string;
           product_id?: string;
+          variant_id?: string;
           quantity?: number;
-          color_index?: number;
-          color_hex?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -147,6 +188,13 @@ export type Database = {
             columns: ["product_id"];
             isOneToOne: false;
             referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cart_items_variant_id_fkey";
+            columns: ["variant_id"];
+            isOneToOne: false;
+            referencedRelation: "product_variants";
             referencedColumns: ["id"];
           },
         ];
@@ -193,6 +241,8 @@ export type Database = {
           expires_at: string;
           status: string;
           order_id: string | null;
+          hidden_from_account_list: boolean;
+          link_access_token: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -207,6 +257,8 @@ export type Database = {
           expires_at: string;
           status?: string;
           order_id?: string | null;
+          hidden_from_account_list?: boolean;
+          link_access_token?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -221,6 +273,8 @@ export type Database = {
           expires_at?: string;
           status?: string;
           order_id?: string | null;
+          hidden_from_account_list?: boolean;
+          link_access_token?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -230,6 +284,70 @@ export type Database = {
             columns: ["order_id"];
             isOneToOne: false;
             referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      custom_checkout_links: {
+        Row: {
+          id: string;
+          token: string;
+          cart_snapshot: Json;
+          shipping_addr: Json;
+          note: string | null;
+          hide_from_account_list: boolean;
+          claimed_user_id: string | null;
+          payment_intent_id: string | null;
+          created_by: string | null;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          token: string;
+          cart_snapshot: Json;
+          shipping_addr: Json;
+          note?: string | null;
+          hide_from_account_list?: boolean;
+          claimed_user_id?: string | null;
+          payment_intent_id?: string | null;
+          created_by?: string | null;
+          expires_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          token?: string;
+          cart_snapshot?: Json;
+          shipping_addr?: Json;
+          note?: string | null;
+          hide_from_account_list?: boolean;
+          claimed_user_id?: string | null;
+          payment_intent_id?: string | null;
+          created_by?: string | null;
+          expires_at?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "custom_checkout_links_claimed_user_id_fkey";
+            columns: ["claimed_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "custom_checkout_links_payment_intent_id_fkey";
+            columns: ["payment_intent_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_intents";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "custom_checkout_links_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
             referencedColumns: ["id"];
           },
         ];
@@ -274,6 +392,8 @@ export type Database = {
           payment_method: string;
           shipping_addr: Json | null;
           note: string | null;
+          hidden_from_account_list: boolean;
+          link_access_token: string | null;
           created_at: string;
           tracking_number: string | null;
           shipping_carrier: string | null;
@@ -290,6 +410,8 @@ export type Database = {
           payment_method?: string;
           shipping_addr?: Json | null;
           note?: string | null;
+          hidden_from_account_list?: boolean;
+          link_access_token?: string | null;
           created_at?: string;
           tracking_number?: string | null;
           shipping_carrier?: string | null;
@@ -306,6 +428,8 @@ export type Database = {
           payment_method?: string;
           shipping_addr?: Json | null;
           note?: string | null;
+          hidden_from_account_list?: boolean;
+          link_access_token?: string | null;
           created_at?: string;
           tracking_number?: string | null;
           shipping_carrier?: string | null;
@@ -332,25 +456,34 @@ export type Database = {
           id: string;
           order_id: string;
           product_id: string | null;
+          variant_id: string | null;
           quantity: number;
           unit_price: number;
           product_name_snapshot: string | null;
+          variant_label_snapshot: string | null;
+          variant_image_snapshot: string | null;
         };
         Insert: {
           id?: string;
           order_id: string;
           product_id?: string | null;
+          variant_id?: string | null;
           quantity: number;
           unit_price: number;
           product_name_snapshot?: string | null;
+          variant_label_snapshot?: string | null;
+          variant_image_snapshot?: string | null;
         };
         Update: {
           id?: string;
           order_id?: string;
           product_id?: string | null;
+          variant_id?: string | null;
           quantity?: number;
           unit_price?: number;
           product_name_snapshot?: string | null;
+          variant_label_snapshot?: string | null;
+          variant_image_snapshot?: string | null;
         };
         Relationships: [
           {
@@ -365,6 +498,13 @@ export type Database = {
             columns: ["product_id"];
             isOneToOne: false;
             referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_items_variant_id_fkey";
+            columns: ["variant_id"];
+            isOneToOne: false;
+            referencedRelation: "product_variants";
             referencedColumns: ["id"];
           },
         ];
@@ -589,6 +729,7 @@ export type Database = {
 };
 
 export type ProductRow = Database["public"]["Tables"]["products"]["Row"];
+export type ProductVariantRow = Database["public"]["Tables"]["product_variants"]["Row"];
 export type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 export type CustomerRow = Database["public"]["Tables"]["customers"]["Row"];
 export type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];

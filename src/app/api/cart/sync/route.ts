@@ -2,9 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 
 type IncomingCartLine = {
   productId: string;
+  variantId: string;
   quantity: number;
-  colorIndex?: number;
-  colorHex?: string | null;
 };
 
 function normalizeLines(input: unknown): IncomingCartLine[] {
@@ -14,21 +13,15 @@ function normalizeLines(input: unknown): IncomingCartLine[] {
     if (!x || typeof x !== "object") continue;
     const r = x as Record<string, unknown>;
     const productId = typeof r.productId === "string" ? r.productId.trim() : "";
-    const quantityRaw = typeof r.quantity === "number" ? r.quantity : Number(r.quantity);
-    const colorIndexRaw =
-      typeof r.colorIndex === "number" ? r.colorIndex : Number(r.colorIndex ?? 0);
-    const colorHex =
-      typeof r.colorHex === "string" && r.colorHex.trim() ? r.colorHex.trim() : null;
-    if (!productId) continue;
+    const variantId = typeof r.variantId === "string" ? r.variantId.trim() : "";
+    const quantityRaw =
+      typeof r.quantity === "number" ? r.quantity : Number(r.quantity);
+    if (!productId || !variantId) continue;
     if (!Number.isFinite(quantityRaw) || quantityRaw < 1) continue;
     out.push({
       productId,
+      variantId,
       quantity: Math.min(99, Math.floor(quantityRaw)),
-      colorIndex:
-        Number.isFinite(colorIndexRaw) && colorIndexRaw >= 0
-          ? Math.floor(colorIndexRaw)
-          : 0,
-      colorHex,
     });
     if (out.length >= 100) break;
   }
@@ -53,7 +46,7 @@ export async function POST(request: Request) {
   }
 
   const lines = normalizeLines(
-    (payload as { items?: unknown } | null)?.items ?? []
+    (payload as { items?: unknown } | null)?.items ?? [],
   );
 
   const { data: cart, error: cartErr } = await supabase
@@ -62,7 +55,7 @@ export async function POST(request: Request) {
       {
         user_id: user.id,
       },
-      { onConflict: "user_id" }
+      { onConflict: "user_id" },
     )
     .select("id")
     .single();
@@ -83,15 +76,14 @@ export async function POST(request: Request) {
     const rows = lines.map((line) => ({
       cart_id: cart.id,
       product_id: line.productId,
+      variant_id: line.variantId,
       quantity: line.quantity,
-      color_index: line.colorIndex ?? 0,
-      color_hex: line.colorHex ?? null,
     }));
     const { error: insErr } = await supabase.from("cart_items").insert(rows);
     if (insErr) {
       return Response.json(
         { synced: false, reason: "cart_items_insert_failed" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   }

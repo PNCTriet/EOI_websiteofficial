@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Heart } from "lucide-react";
-import type { ProductRow } from "@/types/database";
+import type { ProductRow, ProductVariantRow } from "@/types/database";
 import { useCart } from "@/components/cart/cart-context";
 import { useTranslations } from "@/components/locale-provider";
 import {
@@ -10,12 +10,83 @@ import {
   isProductAvailability,
   isPurchasable,
 } from "@/lib/product-availability";
+import { primaryImageForVariant } from "@/lib/product-variant-images";
 
 type Props = {
   product: ProductRow;
+  variants: ProductVariantRow[];
+  selectedVariantId: string;
+  /** false = gallery đang hiện ảnh SP chung; ảnh giỏ dùng ảnh chung */
+  variantGalleryEngaged: boolean;
 };
 
-export function ProductDetailActions({ product }: Props) {
+type VariantPickerProps = {
+  variants: ProductVariantRow[];
+  selectedVariantId: string;
+  onSelectVariant: (id: string) => void;
+  /** Chưa bấm mã: không highlight, gallery là ảnh sản phẩm */
+  variantGalleryEngaged: boolean;
+};
+
+/** Variant chips — dùng ngay dưới gallery để đổi ảnh dễ nhìn */
+export function ProductVariantPicker({
+  variants,
+  selectedVariantId,
+  onSelectVariant,
+  variantGalleryEngaged,
+}: VariantPickerProps) {
+  const t = useTranslations();
+  const selected =
+    variants.find((v) => v.id === selectedVariantId) ?? variants[0];
+
+  if (variants.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl border border-eoi-border/80 bg-white/90 px-3 py-3 shadow-sm backdrop-blur-sm sm:px-4">
+      <p className="mb-2 font-dm text-xs font-medium text-eoi-ink2">
+        {t("store.variantOptions")}
+      </p>
+      {!variantGalleryEngaged ? (
+        <p className="mb-3 font-dm text-[11px] leading-snug text-eoi-ink2/90">
+          {t("store.variantGalleryHint")}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        {variants.map((v) => {
+          const active = variantGalleryEngaged && v.id === selected?.id;
+          const hex = v.color_hex?.trim() || "#94A3B8";
+          return (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => onSelectVariant(v.id)}
+              className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border-2 px-3 py-2 font-dm text-xs font-semibold transition ${
+                active
+                  ? "border-eoi-ink bg-eoi-surface text-eoi-ink"
+                  : "border-eoi-border bg-white text-eoi-ink2 hover:border-eoi-ink/40"
+              }`}
+              aria-pressed={active}
+            >
+              <span
+                className="h-6 w-6 shrink-0 rounded-full border border-eoi-border/50"
+                style={{ backgroundColor: hex }}
+                aria-hidden
+              />
+              <span>{v.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function ProductDetailActions({
+  product,
+  variants,
+  selectedVariantId,
+  variantGalleryEngaged,
+}: Props) {
   const t = useTranslations();
   const { addItem } = useCart();
   const availability = isProductAvailability(product.availability)
@@ -25,34 +96,38 @@ export function ProductDetailActions({ product }: Props) {
     isPurchasable(availability) &&
     product.price != null &&
     !Number.isNaN(product.price);
-  const colors = product.colors?.length
-    ? product.colors
-    : ["#F472B6", "#3B82F6", "#F59E0B", "#111111"];
-  const [selected, setSelected] = useState(0);
+
+  const selected =
+    variants.find((v) => v.id === selectedVariantId) ?? variants[0];
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState(false);
 
-  const images = product.image_urls ?? [];
   const cartImageUrl =
-    images.length > 0
-      ? images[Math.min(selected, images.length - 1)] ?? images[0]
-      : null;
-  const colorHex = colors[selected] ?? "#111111";
+    variantGalleryEngaged && selected
+      ? primaryImageForVariant(product, selected)
+      : product.image_thumb_urls?.[0] ??
+        product.image_urls?.[0] ??
+        primaryImageForVariant(product, selected ?? null);
+  const swatchHex =
+    selected?.color_hex?.trim() ||
+    product.colors?.[0] ||
+    "#111111";
 
   function handleAddToCart() {
     setError(null);
     setJustAdded(false);
-    if (!canPurchase || product.price == null) return;
+    if (!canPurchase || product.price == null || !selected) return;
     setSubmitting(true);
     try {
       addItem({
         productId: product.id,
+        variantId: selected.id,
+        variantLabel: selected.label,
         name: product.name,
         price: product.price,
         imageUrl: cartImageUrl,
-        colorIndex: selected,
-        colorHex,
+        colorHex: swatchHex,
         quantity: 1,
       });
       setJustAdded(true);
@@ -66,30 +141,6 @@ export function ProductDetailActions({ product }: Props) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <p className="mb-2 font-dm text-xs font-medium text-eoi-ink2">
-          {t("store.colors")}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {colors.map((hex, i) => (
-            <button
-              key={`${hex}-${i}`}
-              type="button"
-              onClick={() => setSelected(i)}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border-2 border-transparent ${
-                selected === i ? "outline outline-2 outline-offset-2 outline-eoi-ink" : ""
-              }`}
-              aria-label={t("store.colorNumber", { n: String(i + 1) })}
-            >
-              <span
-                className="block h-7 w-7 rounded-full"
-                style={{ backgroundColor: hex }}
-              />
-            </button>
-          ))}
-        </div>
-      </div>
-
       {!canPurchase ? (
         <p className="rounded-xl bg-eoi-surface px-3 py-2.5 font-dm text-xs font-medium text-eoi-ink2">
           {availability === "coming_soon"
@@ -101,7 +152,7 @@ export function ProductDetailActions({ product }: Props) {
       <div className="flex gap-3">
         <button
           type="button"
-          disabled={submitting || !canPurchase}
+          disabled={submitting || !canPurchase || !selected}
           onClick={handleAddToCart}
           className="min-h-[44px] flex-1 rounded-full bg-eoi-ink px-5 py-3 font-dm text-sm font-semibold text-white disabled:opacity-60"
         >

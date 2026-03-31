@@ -13,15 +13,24 @@ type Props = {
   sepayRef: string;
   totalAmount: number;
   expiresAt: string | null;
+  /** Đơn custom: giữ ?access= khi chuyển sang success / đơn */
+  linkAccessToken?: string | null;
 };
 
-export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expiresAt }: Props) {
+export function CheckoutPendingClient({
+  intentId,
+  sepayRef,
+  totalAmount,
+  expiresAt,
+  linkAccessToken,
+}: Props) {
   const { locale } = useLocaleContext();
   const t = useTranslations();
   const { clearCart } = useCart();
   const router = useRouter();
   const [stage, setStage] = useState("pending");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [paidOrderId, setPaidOrderId] = useState<string | null>(null);
   const [flash, setFlash] = useState<"none" | "success" | "danger">("none");
   const [now, setNow] = useState(Date.now());
   const leaveRef = useRef(false);
@@ -48,10 +57,15 @@ export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expires
               cartClearedRef.current = true;
               clearCart();
             }
+            setPaidOrderId(d.order_id);
             setFlash("success");
             setShowSuccess(true);
             window.setTimeout(() => {
-              router.push(`/checkout/success/${d.order_id}`);
+              const qs =
+                linkAccessToken != null && linkAccessToken !== ""
+                  ? `?access=${encodeURIComponent(linkAccessToken)}`
+                  : "";
+              router.push(`/checkout/success/${d.order_id}${qs}`);
             }, 1200);
           }
           if (d.status === "expired") {
@@ -63,7 +77,7 @@ export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expires
         });
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [intentId, router, clearCart]);
+  }, [intentId, router, clearCart, linkAccessToken]);
 
   const msLeft = expiresAt ? Math.max(0, new Date(expiresAt).getTime() - now) : 0;
   useEffect(() => {
@@ -149,7 +163,11 @@ export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expires
 
         <div className="mt-5 text-center">
           <Link
-            href="/account/orders"
+            href={
+              paidOrderId && linkAccessToken
+                ? `/account/orders/${paidOrderId}?access=${encodeURIComponent(linkAccessToken)}`
+                : "/account/orders"
+            }
             className="inline-flex min-h-[44px] items-center rounded-full border border-eoi-border px-4 py-2 font-dm text-sm text-eoi-ink"
           >
             {t("store.checkoutPendingMyOrders")}
@@ -203,7 +221,13 @@ export function CheckoutPendingClient({ intentId, sepayRef, totalAmount, expires
               className="mt-4 min-h-[44px] rounded-full bg-emerald-700 px-5 py-2 font-dm text-sm font-semibold text-white"
               onClick={() => {
                 setShowSuccess(false);
-                router.push("/account/orders");
+                if (paidOrderId && linkAccessToken) {
+                  router.push(
+                    `/account/orders/${paidOrderId}?access=${encodeURIComponent(linkAccessToken)}`,
+                  );
+                } else {
+                  router.push("/account/orders");
+                }
               }}
             >
               {t("store.checkoutPendingSuccessCta")}

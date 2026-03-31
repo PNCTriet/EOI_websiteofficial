@@ -39,7 +39,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
   if ((isCheckout || isAccount) && !user) {
-    const next = encodeURIComponent(pathname);
+    const nextRaw = `${pathname}${request.nextUrl.search}`;
+    const next = encodeURIComponent(nextRaw);
     return NextResponse.redirect(new URL(`/login?next=${next}`, request.url));
   }
   if (isStoreLogin && user && !isUserAdmin(user)) {

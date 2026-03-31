@@ -6,10 +6,14 @@ import { createClient } from "@/lib/supabase/server";
 import { getServerI18n } from "@/lib/server-i18n";
 import { t } from "@/i18n/translate";
 
-type Props = { params: Promise<{ orderId: string }> };
+type Props = {
+  params: Promise<{ orderId: string }>;
+  searchParams: Promise<{ access?: string }>;
+};
 
-export default async function CheckoutSuccessPage({ params }: Props) {
+export default async function CheckoutSuccessPage({ params, searchParams }: Props) {
   const { orderId } = await params;
+  const { access: accessQuery } = await searchParams;
   const { locale, messages } = await getServerI18n();
   const supabase = await createClient();
   const {
@@ -19,11 +23,19 @@ export default async function CheckoutSuccessPage({ params }: Props) {
 
   const { data: order } = await supabase
     .from("orders")
-    .select("id,sepay_ref,total_amount,stage")
+    .select("id,sepay_ref,total_amount,stage,hidden_from_account_list,link_access_token")
     .eq("id", orderId)
     .eq("user_id", user.id)
     .maybeSingle();
   if (!order) notFound();
+
+  if (
+    order.hidden_from_account_list &&
+    order.link_access_token &&
+    accessQuery !== order.link_access_token
+  ) {
+    notFound();
+  }
 
   return (
     <div className="px-5 py-8 md:px-6">
@@ -42,7 +54,11 @@ export default async function CheckoutSuccessPage({ params }: Props) {
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           <Link
-            href={`/account/orders/${order.id}`}
+            href={
+              order.hidden_from_account_list && order.link_access_token
+                ? `/account/orders/${order.id}?access=${encodeURIComponent(order.link_access_token)}`
+                : `/account/orders/${order.id}`
+            }
             className="inline-flex min-h-[44px] items-center rounded-full bg-eoi-ink px-5 py-2 font-dm text-sm font-semibold text-white"
           >
             {t(messages, "store.checkoutSuccessViewOrderDetail")}

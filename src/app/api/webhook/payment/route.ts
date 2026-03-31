@@ -67,7 +67,9 @@ export async function POST(request: Request) {
 
   const { data: intent } = await supabase
     .from("payment_intents")
-    .select("id,user_id,sepay_ref,amount,cart_snapshot,shipping_addr,note,expires_at,status,order_id")
+    .select(
+      "id,user_id,sepay_ref,amount,cart_snapshot,shipping_addr,note,expires_at,status,order_id,hidden_from_account_list,link_access_token",
+    )
     .eq("sepay_ref", ref)
     .eq("status", "pending")
     .maybeSingle();
@@ -118,6 +120,10 @@ export async function POST(request: Request) {
   }
 
   const paidAt = new Date().toISOString();
+  const intentRow = intent as typeof intent & {
+    hidden_from_account_list?: boolean;
+    link_access_token?: string | null;
+  };
   const { data: order, error: orderErr } = await supabase
     .from("orders")
     .insert({
@@ -130,6 +136,8 @@ export async function POST(request: Request) {
       note: intent.note,
       payment_method: "bank_transfer",
       expires_at: intent.expires_at,
+      hidden_from_account_list: intentRow.hidden_from_account_list ?? false,
+      link_access_token: intentRow.link_access_token ?? null,
     })
     .select("id")
     .single();
@@ -142,9 +150,12 @@ export async function POST(request: Request) {
   const orderItems: Array<{
     order_id: string;
     product_id: string;
+    variant_id: string | null;
     quantity: number;
     unit_price: number;
     product_name_snapshot: string | null;
+    variant_label_snapshot: string | null;
+    variant_image_snapshot: string | null;
   }> = [];
 
   const productIds: string[] = [];
@@ -164,21 +175,39 @@ export async function POST(request: Request) {
 
     for (const row of snapshot) {
       if (!row || typeof row !== "object") continue;
-      const data = row as { productId?: unknown; quantity?: unknown; price?: unknown; name?: unknown };
+      const data = row as {
+        productId?: unknown;
+        variantId?: unknown;
+        variantLabel?: unknown;
+        variantImageUrl?: unknown;
+        quantity?: unknown;
+        price?: unknown;
+        name?: unknown;
+      };
       const productId = typeof data.productId === "string" ? data.productId : null;
+      const variantId = typeof data.variantId === "string" ? data.variantId : null;
+      const variantLabel =
+        typeof data.variantLabel === "string" ? data.variantLabel.trim() : "";
+      const variantImageUrl =
+        typeof data.variantImageUrl === "string" ? data.variantImageUrl.trim() : "";
       const quantity = typeof data.quantity === "number" ? data.quantity : Number(data.quantity);
-      if (!productId || !Number.isFinite(quantity) || quantity <= 0) continue;
+      if (!productId || !variantId || !Number.isFinite(quantity) || quantity <= 0) continue;
       const prod = productMap.get(productId);
       if (!prod || prod.price == null) continue;
       const fromSnapshotPrice =
         typeof data.price === "number" && Number.isFinite(data.price) ? data.price : null;
       const fromSnapshotName = typeof data.name === "string" ? data.name : null;
+      const displayName = fromSnapshotName ?? prod.name;
+      const label = variantLabel || "—";
       orderItems.push({
         order_id: order.id,
         product_id: productId,
+        variant_id: variantId,
         quantity: Math.floor(quantity),
         unit_price: fromSnapshotPrice ?? prod.price,
-        product_name_snapshot: fromSnapshotName ?? prod.name,
+        product_name_snapshot: displayName,
+        variant_label_snapshot: label,
+        variant_image_snapshot: variantImageUrl || null,
       });
     }
   }

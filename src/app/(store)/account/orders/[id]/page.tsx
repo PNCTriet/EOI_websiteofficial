@@ -5,12 +5,22 @@ import { formatShippingAddrLines, parseShippingAddr } from "@/lib/order-shipping
 import { createClient } from "@/lib/supabase/server";
 import { getServerI18n } from "@/lib/server-i18n";
 import { userPhaseProgress } from "@/lib/order-user-phase";
+import {
+  buildCartVariantLabelMap,
+  orderItemDisplayProductName,
+  orderItemDisplayVariantLabel,
+  type OrderItemWithVariantJoin,
+} from "@/lib/order-item-display";
 import type { Json, OrderStage } from "@/types/database";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ access?: string }>;
+};
 
-export default async function AccountOrderDetailPage({ params }: Props) {
+export default async function AccountOrderDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { access: accessQuery } = await searchParams;
   const { locale, messages } = await getServerI18n();
   const supabase = await createClient();
   const {
@@ -22,7 +32,7 @@ export default async function AccountOrderDetailPage({ params }: Props) {
   const { data: order } = await supabase
     .from("orders")
     .select(
-      "id,sepay_ref,total_amount,stage,created_at,paid_at,shipping_addr,tracking_number,shipping_carrier"
+      "id,sepay_ref,total_amount,stage,created_at,paid_at,shipping_addr,tracking_number,shipping_carrier,hidden_from_account_list,link_access_token",
     )
     .eq("id", id)
     .eq("user_id", user.id)
@@ -30,13 +40,51 @@ export default async function AccountOrderDetailPage({ params }: Props) {
 
   if (!order) notFound();
 
+  if (
+    order.hidden_from_account_list &&
+    order.link_access_token &&
+    accessQuery !== order.link_access_token
+  ) {
+    notFound();
+  }
+
   const stage = order.stage as OrderStage;
   if (stage === "expired") notFound();
 
-  const { data: items } = await supabase
+  const { data: itemsRaw } = await supabase
     .from("order_items")
-    .select("id,product_name_snapshot,quantity,unit_price")
+    .select(
+      "id,product_id,product_name_snapshot,variant_label_snapshot,variant_id,quantity,unit_price, products ( name )",
+    )
     .eq("order_id", order.id);
+  const items = (itemsRaw as OrderItemWithVariantJoin[] | null) ?? [];
+
+  const variantIds = [
+    ...new Set(items.map((i) => i.variant_id).filter(Boolean)),
+  ] as string[];
+  let variantLabelsById = new Map<string, string>();
+  if (variantIds.length > 0) {
+    const { data: pvRows } = await supabase
+      .from("product_variants")
+      .select("id,label")
+      .in("id", variantIds);
+    variantLabelsById = new Map(
+      (pvRows ?? []).map((r) => [r.id, r.label?.trim() ?? ""]),
+    );
+  }
+
+  const { data: intentRows } = await supabase
+    .from("payment_intents")
+    .select("cart_snapshot")
+    .eq("order_id", order.id)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const cartLabels = buildCartVariantLabelMap(intentRows?.[0]?.cart_snapshot);
+
+  const variantLabelOpts = {
+    variantLabelsById,
+    cartLabels,
+  };
 
   const { data: logsRaw } = await supabase
     .from("order_stage_logs")
@@ -183,16 +231,24 @@ export default async function AccountOrderDetailPage({ params }: Props) {
       ) : null}
 
       <div className="mt-4 space-y-2">
-        {(items ?? []).map((it) => (
+        {items.map((it) => {
+          const variantLabel = orderItemDisplayVariantLabel(it, variantLabelOpts);
+          return (
           <div key={it.id} className="rounded-lg border border-eoi-border px-3 py-2">
             <p className="font-dm text-sm text-eoi-ink">
-              {it.product_name_snapshot ?? t(messages, "admin.orders.productFallback")}
+              {orderItemDisplayProductName(it, t(messages, "admin.orders.productFallback"))}
             </p>
+            {variantLabel ? (
+              <p className="mt-0.5 font-dm text-xs text-eoi-ink2">
+                {t(messages, "store.variantLine")}: {variantLabel}
+              </p>
+            ) : null}
             <p className="font-dm text-xs text-eoi-ink2">
               x{it.quantity} · {formatPrice(locale, it.unit_price)}
             </p>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

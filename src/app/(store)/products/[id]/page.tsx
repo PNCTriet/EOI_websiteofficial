@@ -5,17 +5,13 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/i18n/dictionaries";
 import { t } from "@/i18n/translate";
-import { ProductDescription } from "@/components/product-description";
-import { ProductImageGallery } from "@/components/product-image-gallery";
-import { ProductDetailActions } from "@/components/product-detail-actions";
-import { formatProductPrice } from "@/lib/format-locale";
+import { ProductDetailView } from "@/components/store/product-detail-view";
 import {
   defaultAvailability,
   isProductAvailability,
 } from "@/lib/product-availability";
 import { getLocale } from "@/lib/locale";
-import { storeCategoryLabel } from "@/lib/product-taxonomy";
-import type { ProductRow } from "@/types/database";
+import type { ProductRow, ProductVariantRow } from "@/types/database";
 import { brandAssets } from "@/lib/brand-assets";
 import { getSiteOriginString, toAbsoluteSiteUrl } from "@/lib/site-url";
 import { stripHtmlForPreview } from "@/lib/product-description";
@@ -206,14 +202,19 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  const locale = await getLocale();
-  const messages = getDictionary(locale);
+  const supabase = await createClient();
+  const { data: variantRows } = await supabase
+    .from("product_variants")
+    .select("*")
+    .eq("product_id", id)
+    .order("sort_order", { ascending: true });
+  const variants = (variantRows ?? []) as ProductVariantRow[];
+
+  const messages = getDictionary(await getLocale());
   const tr = (path: string, vars?: Record<string, string>) =>
     t(messages, path, vars);
 
   const defaultDesc = tr("store.productDefaultDescription");
-  const deliveryMin = product.delivery_days_min ?? 3;
-  const deliveryMax = product.delivery_days_max ?? 5;
   const availability = isProductAvailability(product.availability)
     ? product.availability
     : defaultAvailability();
@@ -272,53 +273,7 @@ export default async function ProductDetailPage({ params }: Props) {
         >
           <ChevronLeft size={22} strokeWidth={1.8} />
         </Link>
-        <ProductImageGallery
-          key={product.id}
-          imageUrls={product.image_urls}
-          thumbUrls={product.image_thumb_urls}
-          accentBg={product.accent_bg}
-        />
-      </div>
-
-      <div className="mx-auto mt-6 max-w-lg space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-block rounded-full bg-eoi-blue-light px-3 py-1 font-dm text-[11px] font-semibold text-eoi-blue-dark">
-            {storeCategoryLabel(messages, product.category)}
-          </span>
-          {availability === "coming_soon" ? (
-            <span className="inline-block rounded-full bg-violet-100 px-3 py-1 font-dm text-[11px] font-semibold text-violet-800">
-              {tr("store.availabilityComingSoon")}
-            </span>
-          ) : null}
-          {availability === "out_of_stock" ? (
-            <span className="inline-block rounded-full bg-neutral-200 px-3 py-1 font-dm text-[11px] font-semibold text-neutral-700">
-              {tr("store.availabilityOutOfStock")}
-            </span>
-          ) : null}
-        </div>
-        <h1 className="font-syne text-2xl font-extrabold tracking-[-1px] text-eoi-ink md:text-[26px]">
-          {product.name}
-        </h1>
-        <p className="font-dm text-[13px] text-eoi-ink2">
-          {product.material ?? tr("common.dash")}{" "}
-          {tr("store.shippingEstimateRange", {
-            min: String(deliveryMin),
-            max: String(deliveryMax),
-          })}
-        </p>
-        <p className="font-syne text-[28px] font-extrabold tracking-[-0.5px] text-eoi-ink">
-          {formatProductPrice(locale, product.price, tr("store.priceNotSet"))}
-        </p>
-        <ProductDescription
-          content={product.description}
-          fallback={
-            <div className="whitespace-pre-line font-dm text-[13px] leading-relaxed text-eoi-ink2">
-              {defaultDesc}
-            </div>
-          }
-        />
-
-        <ProductDetailActions product={product} />
+        <ProductDetailView product={product} variants={variants} />
       </div>
     </div>
   );

@@ -34,6 +34,7 @@ export function CartPageClient() {
       body: JSON.stringify({
         items: items.map((x) => ({
           productId: x.productId,
+          variantId: x.variantId,
           quantity: x.quantity,
         })),
       }),
@@ -88,7 +89,7 @@ export function CartPageClient() {
       <ul className="space-y-4">
         {items.map((line) => (
           <li
-            key={`${line.productId}-${line.colorIndex}`}
+            key={`${line.productId}-${line.variantId}`}
             className="flex gap-3 rounded-2xl border border-eoi-border bg-white p-3 shadow-sm"
           >
             <div
@@ -113,12 +114,18 @@ export function CartPageClient() {
                 {line.name}
               </p>
               <p className="mt-0.5 font-dm text-[11px] text-eoi-ink2">
-                {t("store.colors")}:{" "}
-                <span
-                  className="inline-block h-3 w-3 rounded-full align-middle"
-                  style={{ backgroundColor: line.colorHex }}
-                  title={line.colorHex}
-                />
+                {t("store.variantLine")}:{" "}
+                <span className="font-medium text-eoi-ink">{line.variantLabel}</span>
+                {line.colorHex ? (
+                  <>
+                    {" "}
+                    <span
+                      className="inline-block h-3 w-3 rounded-full align-middle"
+                      style={{ backgroundColor: line.colorHex }}
+                      title={line.colorHex}
+                    />
+                  </>
+                ) : null}
               </p>
               {invalidMap.has(line.productId) ? (
                 <p className="mt-1 font-dm text-[11px] text-red-600">
@@ -127,9 +134,11 @@ export function CartPageClient() {
                     ? t("store.availabilityComingSoon")
                     : invalidMap.get(line.productId) === "out_of_stock"
                       ? t("store.availabilityOutOfStock")
-                      : invalidMap.get(line.productId) === "no_price"
-                        ? t("store.priceNotSet")
-                        : t("common.error")}
+                      : invalidMap.get(line.productId) === "bad_variant"
+                        ? t("store.cartInvalidVariant")
+                        : invalidMap.get(line.productId) === "no_price"
+                          ? t("store.priceNotSet")
+                          : t("common.error")}
                 </p>
               ) : null}
               <p className="mt-1 font-syne text-sm font-extrabold text-eoi-ink">
@@ -144,8 +153,8 @@ export function CartPageClient() {
                     onClick={() =>
                       setLineQuantity(
                         line.productId,
-                        line.colorIndex,
-                        line.quantity - 1
+                        line.variantId,
+                        line.quantity - 1,
                       )
                     }
                   >
@@ -161,8 +170,8 @@ export function CartPageClient() {
                     onClick={() =>
                       setLineQuantity(
                         line.productId,
-                        line.colorIndex,
-                        line.quantity + 1
+                        line.variantId,
+                        line.quantity + 1,
                       )
                     }
                   >
@@ -171,7 +180,7 @@ export function CartPageClient() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => removeLine(line.productId, line.colorIndex)}
+                  onClick={() => removeLine(line.productId, line.variantId)}
                   className="inline-flex min-h-[40px] items-center gap-1 rounded-full px-3 font-dm text-xs font-medium text-red-600 hover:bg-red-50"
                 >
                   <Trash2 size={14} strokeWidth={2} aria-hidden />

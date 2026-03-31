@@ -12,7 +12,25 @@ import {
   isProductAvailability,
 } from "@/lib/product-availability";
 import { isStoreCategorySlug } from "@/lib/product-taxonomy";
-import type { ProductRow } from "@/types/database";
+import type { ProductRow, ProductVariantRow } from "@/types/database";
+
+type VariantFormRow = {
+  id: string;
+  label: string;
+  color_hex: string;
+  image_urls: string[];
+  image_thumb_urls: string[];
+};
+
+function toVariantFormRow(r: ProductVariantRow): VariantFormRow {
+  return {
+    id: r.id,
+    label: r.label,
+    color_hex: r.color_hex ?? "#F472B6",
+    image_urls: [...(r.image_urls ?? [])],
+    image_thumb_urls: [...(r.image_thumb_urls ?? [])],
+  };
+}
 
 function normalizeBadgeForForm(b: string | null | undefined): string {
   if (!b?.trim()) return "";
@@ -127,7 +145,15 @@ export default function AdminProductFormPage() {
   const [categorySelect, setCategorySelect] = useState("");
   const [categoryCustom, setCategoryCustom] = useState("");
   const [badge, setBadge] = useState("");
-  const [colors, setColors] = useState<string[]>(["#F472B6"]);
+  const [variants, setVariants] = useState<VariantFormRow[]>(() => [
+    {
+      id: crypto.randomUUID(),
+      label: "Mặc định",
+      color_hex: "#F472B6",
+      image_urls: [],
+      image_thumb_urls: [],
+    },
+  ]);
   const [deliveryMin, setDeliveryMin] = useState("3");
   const [deliveryMax, setDeliveryMax] = useState("5");
   const [availability, setAvailability] =
@@ -175,9 +201,24 @@ export default function AdminProductFormPage() {
         setCategoryCustom("");
       }
       setBadge(normalizeBadgeForForm(p.badge));
-      setColors(
-        p.colors?.length ? [...p.colors] : ["#F472B6"]
-      );
+      const { data: vrows } = await supabase
+        .from("product_variants")
+        .select("*")
+        .eq("product_id", idParam)
+        .order("sort_order", { ascending: true });
+      if (vrows?.length) {
+        setVariants(vrows.map((row) => toVariantFormRow(row as ProductVariantRow)));
+      } else {
+        setVariants([
+          {
+            id: crypto.randomUUID(),
+            label: "Mặc định",
+            color_hex: p.colors?.[0] ?? "#F472B6",
+            image_urls: [],
+            image_thumb_urls: [],
+          },
+        ]);
+      }
       setDeliveryMin(String(p.delivery_days_min ?? 3));
       setDeliveryMax(String(p.delivery_days_max ?? 5));
       setDescriptionEditorEpoch((x) => x + 1);
@@ -288,6 +329,123 @@ export default function AdminProductFormPage() {
     setUploading(false);
   }
 
+  async function persistVariants(supabase: ReturnType<typeof createClient>, productId: string) {
+    const { data: existing } = await supabase
+      .from("product_variants")
+      .select("id")
+      .eq("product_id", productId);
+    const keepIds = new Set(variants.map((v) => v.id));
+    const toDelete =
+      existing?.filter((e) => !keepIds.has(e.id)).map((e) => e.id) ?? [];
+    if (toDelete.length) {
+      await supabase.from("product_variants").delete().in("id", toDelete);
+    }
+    const rows = variants.map((v, i) => ({
+      id: v.id,
+      product_id: productId,
+      label: v.label.trim() || `Mã ${i + 1}`,
+      sort_order: i,
+      color_hex: normalizeColorInput(v.color_hex),
+      image_urls: v.image_urls.length ? v.image_urls : [],
+      image_thumb_urls: v.image_thumb_urls.length ? v.image_thumb_urls : [],
+    }));
+    const { error } = await supabase.from("product_variants").upsert(rows, {
+      onConflict: "id",
+    });
+    return error;
+  }
+
+  async function handleVariantFiles(variantIndex: number, files: FileList | null) {
+    if (!files?.length) return;
+    setUploading(true);
+    setError(null);
+    const supabase = createClient();
+    const v = variants[variantIndex];
+    if (!v) {
+      setUploading(false);
+      return;
+    }
+    const nextUrls = [...v.image_urls];
+    const nextThumbs = [...v.image_thumb_urls];
+
+    async function makeThumbnailBlob(file: File): Promise<Blob | null> {
+      if (!file.type.startsWith("image/")) return null;
+      try {
+        const bitmap = await createImageBitmap(file);
+        const maxDim = 640;
+        const w = bitmap.width;
+        const h = bitmap.height;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        const tw = Math.max(1, Math.round(w * scale));
+        const th = Math.max(1, Math.round(h * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = tw;
+        canvas.height = th;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
+        ctx.drawImage(bitmap, 0, 0, tw, th);
+        const blob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob((b) => resolve(b), "image/jpeg", 0.82);
+        });
+        return blob;
+      } catch {
+        return null;
+      }
+    }
+
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) {
+        setError(t("admin.products.invalidImageType"));
+        setUploading(false);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError(t("admin.products.imageTooLarge"));
+        setUploading(false);
+        return;
+      }
+      const safeName = sanitizeStorageFilename(
+        ensureFilenameHasImageExtension(file.name.replace(/\s+/g, "-"), file.type),
+      );
+      const path = `v-${v.id.slice(0, 8)}/${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage.from("product-images").upload(path, file);
+      if (upErr) {
+        setError(mapStorageUploadError(upErr.message, t));
+        setUploading(false);
+        return;
+      }
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("product-images").getPublicUrl(path);
+      nextUrls.push(publicUrl);
+      const thumbBlob = await makeThumbnailBlob(file);
+      if (thumbBlob) {
+        const thumbPath = `v-${v.id.slice(0, 8)}/thumb-${storageObjectStem(path)}.jpg`;
+        const { error: upThumbErr } = await supabase.storage
+          .from("product-images")
+          .upload(thumbPath, thumbBlob, { contentType: "image/jpeg" });
+        if (!upThumbErr) {
+          const {
+            data: { publicUrl: thumbPublicUrl },
+          } = supabase.storage.from("product-images").getPublicUrl(thumbPath);
+          nextThumbs.push(thumbPublicUrl);
+        } else {
+          nextThumbs.push(publicUrl);
+        }
+      } else {
+        nextThumbs.push(publicUrl);
+      }
+    }
+    setVariants((prev) =>
+      prev.map((row, i) =>
+        i === variantIndex
+          ? { ...row, image_urls: nextUrls, image_thumb_urls: nextThumbs }
+          : row,
+      ),
+    );
+    setUploading(false);
+  }
+
   function validate(): boolean {
     const fe: Record<string, string> = {};
     if (!name.trim()) fe.name = t("admin.products.fieldRequired");
@@ -325,6 +483,16 @@ export default function AdminProductFormPage() {
       fe.delivery = t("admin.products.invalidDeliveryRange");
     }
 
+    if (variants.length < 1) {
+      fe.variants = t("admin.products.fieldRequired");
+    }
+    for (let i = 0; i < variants.length; i++) {
+      if (!variants[i].label.trim()) {
+        fe.variants = t("admin.products.fieldRequired");
+        break;
+      }
+    }
+
     setFieldErrors(fe);
     return Object.keys(fe).length === 0;
   }
@@ -341,8 +509,8 @@ export default function AdminProductFormPage() {
         ? categoryCustom.trim() || null
         : categorySelect || null;
 
-    const normalizedColors = colors
-      .map((c) => normalizeColorInput(c))
+    const normalizedColors = variants
+      .map((v) => normalizeColorInput(v.color_hex))
       .filter((c): c is string => c !== null);
 
     const dMin = Number.parseInt(deliveryMin, 10);
@@ -372,9 +540,19 @@ export default function AdminProductFormPage() {
     };
 
     if (isNew) {
-      const { error: insErr } = await supabase.from("products").insert(payload);
-      if (insErr) {
-        setError(insErr.message);
+      const { data: created, error: insErr } = await supabase
+        .from("products")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (insErr || !created) {
+        setError(insErr?.message ?? t("admin.products.createError"));
+        setSubmitting(false);
+        return;
+      }
+      const varErr = await persistVariants(supabase, created.id);
+      if (varErr) {
+        setError(varErr.message);
         setSubmitting(false);
         return;
       }
@@ -388,22 +566,49 @@ export default function AdminProductFormPage() {
         setSubmitting(false);
         return;
       }
+      const varErr = await persistVariants(supabase, idParam);
+      if (varErr) {
+        setError(varErr.message);
+        setSubmitting(false);
+        return;
+      }
     }
     router.push("/admin/products");
     router.refresh();
   }
 
-  function setColorAt(index: number, value: string) {
-    setColors((prev) => prev.map((c, i) => (i === index ? value : c)));
+  function addVariantRow() {
+    setVariants((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        label: "",
+        color_hex: "#64748B",
+        image_urls: [],
+        image_thumb_urls: [],
+      },
+    ]);
   }
 
-  function addColorRow() {
-    setColors((prev) => [...prev, "#64748B"]);
+  function removeVariantRow(index: number) {
+    setVariants((prev) =>
+      prev.length <= 1 ? prev : prev.filter((_, i) => i !== index),
+    );
   }
 
-  function removeColorRow(index: number) {
-    setColors((prev) =>
-      prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)
+  function removeVariantImageAt(variantIndex: number, imageIndex: number) {
+    setVariants((prev) =>
+      prev.map((row, i) =>
+        i === variantIndex
+          ? {
+              ...row,
+              image_urls: row.image_urls.filter((_, j) => j !== imageIndex),
+              image_thumb_urls: row.image_thumb_urls.filter(
+                (_, j) => j !== imageIndex,
+              ),
+            }
+          : row,
+      ),
     );
   }
 
@@ -580,33 +785,114 @@ export default function AdminProductFormPage() {
 
         <div>
           <label className="font-dm text-xs font-medium text-eoi-ink2">
-            {t("admin.products.colorsLabel")}
+            {t("admin.products.variantsTitle")}
           </label>
-          <div className="mt-2 space-y-2">
-            {colors.map((hex, i) => {
-              const pickerSafe = /^#[0-9A-Fa-f]{6}$/i.test(hex) ? hex : "#000000";
+          <p className="mt-1 font-dm text-[11px] text-eoi-ink2">
+            {t("admin.products.variantsHint")}
+          </p>
+          {fieldErrors.variants ? (
+            <p className="mt-1 font-dm text-xs text-red-600">{fieldErrors.variants}</p>
+          ) : null}
+          <div className="mt-3 space-y-4">
+            {variants.map((v, i) => {
+              const pickerSafe = /^#[0-9A-Fa-f]{6}$/i.test(v.color_hex)
+                ? v.color_hex
+                : "#000000";
               return (
-                <div key={i} className="flex flex-wrap items-center gap-2">
-                  <input
-                    type="color"
-                    value={pickerSafe}
-                    onChange={(e) => setColorAt(i, e.target.value.toUpperCase())}
-                    className="h-10 w-14 cursor-pointer rounded border border-eoi-border bg-white"
-                    aria-label={`${t("admin.products.colorsLabel")} ${i + 1}`}
-                  />
-                  <input
-                    value={hex}
-                    onChange={(e) => setColorAt(i, e.target.value)}
-                    placeholder="#RRGGBB"
-                    className={`${inputClass} mt-0 min-w-[7rem] flex-1 font-mono text-xs`}
-                  />
+                <div
+                  key={v.id}
+                  className="space-y-3 rounded-xl border border-eoi-border bg-eoi-pink-light/30 p-3"
+                >
+                  <div>
+                    <label className="font-dm text-xs font-medium text-eoi-ink2">
+                      {t("admin.products.variantLabelField")}
+                    </label>
+                    <input
+                      value={v.label}
+                      onChange={(e) =>
+                        setVariants((prev) =>
+                          prev.map((row, j) =>
+                            j === i ? { ...row, label: e.target.value } : row,
+                          ),
+                        )
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="font-dm text-xs font-medium text-eoi-ink2">
+                      {t("admin.products.colorsLabel")}
+                    </label>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <input
+                        type="color"
+                        value={pickerSafe}
+                        onChange={(e) =>
+                          setVariants((prev) =>
+                            prev.map((row, j) =>
+                              j === i
+                                ? { ...row, color_hex: e.target.value.toUpperCase() }
+                                : row,
+                            ),
+                          )
+                        }
+                        className="h-10 w-14 cursor-pointer rounded border border-eoi-border bg-white"
+                        aria-label={`${t("admin.products.colorsLabel")} ${i + 1}`}
+                      />
+                      <input
+                        value={v.color_hex}
+                        onChange={(e) =>
+                          setVariants((prev) =>
+                            prev.map((row, j) =>
+                              j === i ? { ...row, color_hex: e.target.value } : row,
+                            ),
+                          )
+                        }
+                        placeholder="#RRGGBB"
+                        className={`${inputClass} mt-0 min-w-[7rem] flex-1 font-mono text-xs`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="font-dm text-xs font-medium text-eoi-ink2">
+                      {t("admin.products.variantImages")}
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      disabled={uploading}
+                      onChange={(e) => void handleVariantFiles(i, e.target.files)}
+                      className="mt-1 w-full font-dm text-sm text-eoi-ink2 file:mr-3 file:rounded-full file:border-0 file:bg-eoi-pink-light file:px-4 file:py-2 file:font-dm file:text-sm file:font-medium file:text-eoi-pink-dark"
+                    />
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {v.image_urls.map((url, ii) => (
+                        <div key={`${url}-${ii}`} className="group relative">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={v.image_thumb_urls[ii] ?? url}
+                            alt=""
+                            className="h-16 w-16 rounded-lg border border-eoi-border object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeVariantImageAt(i, ii)}
+                            className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-red-600 shadow ring-1 ring-eoi-border"
+                            aria-label={`${t("admin.products.colorsRemove")} ${ii + 1}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => removeColorRow(i)}
-                    disabled={colors.length <= 1}
-                    className="rounded-full border border-eoi-border px-3 py-2 font-dm text-xs text-eoi-ink disabled:opacity-40"
+                    onClick={() => removeVariantRow(i)}
+                    disabled={variants.length <= 1}
+                    className="rounded-full border border-eoi-border bg-white px-3 py-2 font-dm text-xs text-eoi-ink disabled:opacity-40"
                   >
-                    {t("admin.products.colorsRemove")}
+                    {t("admin.products.removeVariant")}
                   </button>
                 </div>
               );
@@ -614,10 +900,10 @@ export default function AdminProductFormPage() {
           </div>
           <button
             type="button"
-            onClick={addColorRow}
-            className="mt-2 rounded-full border border-eoi-border bg-eoi-pink-light px-4 py-2 font-dm text-xs font-medium text-eoi-pink-dark"
+            onClick={addVariantRow}
+            className="mt-3 rounded-full border border-eoi-border bg-eoi-pink-light px-4 py-2 font-dm text-xs font-medium text-eoi-pink-dark"
           >
-            {t("admin.products.colorsAdd")}
+            {t("admin.products.addVariant")}
           </button>
         </div>
 
@@ -711,6 +997,17 @@ export default function AdminProductFormPage() {
             {t("admin.products.stlUrlHint")}
           </p>
         </div>
+
+        {!isNew ? (
+          <p className="font-dm text-sm">
+            <Link
+              href={`/admin/custom-order?productId=${encodeURIComponent(idParam)}&variantId=${encodeURIComponent(variants[0]?.id ?? "")}`}
+              className="font-medium text-eoi-pink-dark underline underline-offset-2 hover:text-eoi-ink"
+            >
+              {t("admin.products.customOrderLink")}
+            </Link>
+          </p>
+        ) : null}
 
         <div className="flex items-center gap-3">
           <button

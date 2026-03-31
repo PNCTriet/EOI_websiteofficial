@@ -12,16 +12,19 @@ import {
 } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-const STORAGE_KEY = "eoi_cart_v1";
+const STORAGE_KEY = "eoi_cart_v2";
 
 export type CartLine = {
   productId: string;
+  /** product_variants.id */
+  variantId: string;
+  variantLabel: string;
   name: string;
   price: number;
   quantity: number;
   imageUrl: string | null;
-  colorIndex: number;
-  colorHex: string;
+  /** Màu swatch (tuỳ chọn) */
+  colorHex: string | null;
 };
 
 type CartContextValue = {
@@ -31,19 +34,20 @@ type CartContextValue = {
   subtotal: number;
   addItem: (input: {
     productId: string;
+    variantId: string;
+    variantLabel: string;
     name: string;
     price: number;
     imageUrl: string | null;
-    colorIndex: number;
-    colorHex: string;
+    colorHex: string | null;
     quantity?: number;
   }) => void;
   setLineQuantity: (
     productId: string,
-    colorIndex: number,
-    quantity: number
+    variantId: string,
+    quantity: number,
   ) => void;
-  removeLine: (productId: string, colorIndex: number) => void;
+  removeLine: (productId: string, variantId: string) => void;
   clearCart: () => void;
 };
 
@@ -106,9 +110,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           items: items.map((x) => ({
             productId: x.productId,
+            variantId: x.variantId,
             quantity: x.quantity,
-            colorIndex: x.colorIndex,
-            colorHex: x.colorHex,
           })),
         }),
       });
@@ -121,18 +124,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(
     (input: {
       productId: string;
+      variantId: string;
+      variantLabel: string;
       name: string;
       price: number;
       imageUrl: string | null;
-      colorIndex: number;
-      colorHex: string;
+      colorHex: string | null;
       quantity?: number;
     }) => {
       const q = input.quantity ?? 1;
       setItems((prev) => {
         const i = prev.findIndex(
           (x) =>
-            x.productId === input.productId && x.colorIndex === input.colorIndex
+            x.productId === input.productId && x.variantId === input.variantId,
         );
         if (i >= 0) {
           const next = [...prev];
@@ -146,42 +150,43 @@ export function CartProvider({ children }: { children: ReactNode }) {
           ...prev,
           {
             productId: input.productId,
+            variantId: input.variantId,
+            variantLabel: input.variantLabel,
             name: input.name,
             price: input.price,
             quantity: q,
             imageUrl: input.imageUrl,
-            colorIndex: input.colorIndex,
             colorHex: input.colorHex,
           },
         ];
       });
     },
-    []
+    [],
   );
 
   const setLineQuantity = useCallback(
-    (productId: string, colorIndex: number, quantity: number) => {
+    (productId: string, variantId: string, quantity: number) => {
       setItems((prev) => {
         if (quantity < 1) {
           return prev.filter(
-            (x) => !(x.productId === productId && x.colorIndex === colorIndex)
+            (x) => !(x.productId === productId && x.variantId === variantId),
           );
         }
         return prev.map((x) =>
-          x.productId === productId && x.colorIndex === colorIndex
+          x.productId === productId && x.variantId === variantId
             ? { ...x, quantity }
-            : x
+            : x,
         );
       });
     },
-    []
+    [],
   );
 
-  const removeLine = useCallback((productId: string, colorIndex: number) => {
+  const removeLine = useCallback((productId: string, variantId: string) => {
     setItems((prev) =>
       prev.filter(
-        (x) => !(x.productId === productId && x.colorIndex === colorIndex)
-      )
+        (x) => !(x.productId === productId && x.variantId === variantId),
+      ),
     );
   }, []);
 
@@ -189,12 +194,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const itemCount = useMemo(
     () => items.reduce((s, x) => s + x.quantity, 0),
-    [items]
+    [items],
   );
 
   const subtotal = useMemo(
     () => items.reduce((s, x) => s + x.price * x.quantity, 0),
-    [items]
+    [items],
   );
 
   const value = useMemo<CartContextValue>(
@@ -217,7 +222,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setLineQuantity,
       removeLine,
       clearCart,
-    ]
+    ],
   );
 
   return (

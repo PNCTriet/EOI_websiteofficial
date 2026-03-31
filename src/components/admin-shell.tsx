@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
+  Link2,
   Package,
   ShoppingCart,
   Users,
@@ -43,6 +44,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       { href: "/admin", labelKey: "admin.dashboard.title", icon: LayoutDashboard },
       { href: "/admin/products", labelKey: "admin.products.title", icon: Package },
       { href: "/admin/orders", labelKey: "admin.orders.title", icon: ShoppingCart },
+      { href: "/admin/custom-order", labelKey: "admin.customOrder.nav", icon: Link2 },
       { href: "/admin/customers", labelKey: "admin.customers.title", icon: Users },
       { href: "/admin/emails", labelKey: "admin.emails.title", icon: Mail },
     ];

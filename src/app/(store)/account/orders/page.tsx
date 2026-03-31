@@ -49,6 +49,7 @@ export default async function AccountOrdersPage({ searchParams }: Props) {
     .from("orders")
     .select("id,sepay_ref,total_amount,stage,created_at")
     .eq("user_id", user.id)
+    .eq("hidden_from_account_list", false)
     .order("created_at", { ascending: false });
 
   const orders = (data ?? []).filter((o) => (o.stage as OrderStage) !== "expired");

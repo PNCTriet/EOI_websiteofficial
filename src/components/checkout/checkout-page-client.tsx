@@ -51,10 +51,15 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
       JSON.stringify(
         items.map((x) => ({
           productId: x.productId,
+          variantId: x.variantId,
+          variantLabel: x.variantLabel,
+          variantImageUrl: x.imageUrl,
           quantity: x.quantity,
-        }))
+          price: x.price,
+          name: x.name,
+        })),
       ),
-    [items]
+    [items],
   );
 
   return (

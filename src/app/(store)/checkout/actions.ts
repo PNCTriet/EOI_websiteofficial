@@ -1,16 +1,20 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { generateSepayRef } from "@/lib/order-ref";
 import { createServiceClient } from "@/lib/supabase/service";
 
-type CartInput = {
+export type CheckoutCartLine = {
   productId: string;
+  variantId: string;
+  variantLabel: string;
+  variantImageUrl: string | null;
   quantity: number;
+  price: number;
+  name: string;
 };
 
-function parseCartItems(raw: FormDataEntryValue | null): CartInput[] {
+function parseCartItems(raw: FormDataEntryValue | null): CheckoutCartLine[] {
   if (typeof raw !== "string" || !raw.trim()) return [];
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -19,15 +23,31 @@ function parseCartItems(raw: FormDataEntryValue | null): CartInput[] {
       .map((x) => {
         if (!x || typeof x !== "object") return null;
         const r = x as Record<string, unknown>;
-        const productId = typeof r.productId === "string" ? r.productId : "";
+        const productId =
+          typeof r.productId === "string" ? r.productId.trim() : "";
+        const variantId =
+          typeof r.variantId === "string" ? r.variantId.trim() : "";
+        const variantLabel =
+          typeof r.variantLabel === "string" ? r.variantLabel.trim() : "";
+        const variantImageUrl =
+          typeof r.variantImageUrl === "string" ? r.variantImageUrl.trim() : null;
+        const name = typeof r.name === "string" ? r.name.trim() : "";
         const quantity = Number(r.quantity);
-        if (!productId || !Number.isFinite(quantity) || quantity < 1) return null;
+        const price = Number(r.price);
+        if (!productId || !variantId) return null;
+        if (!Number.isFinite(quantity) || quantity < 1) return null;
+        if (!Number.isFinite(price) || price < 0) return null;
         return {
           productId,
+          variantId,
+          variantLabel: variantLabel || "—",
+          variantImageUrl: variantImageUrl || null,
           quantity: Math.floor(quantity),
+          price: Math.floor(price),
+          name: name || "Product",
         };
       })
-      .filter((x): x is CartInput => x !== null)
+      .filter((x): x is CheckoutCartLine => x !== null)
       .slice(0, 100);
   } catch {
     return [];
@@ -96,6 +116,8 @@ export async function createCheckoutOrder(formData: FormData): Promise<{
 
   const admin = createServiceClient();
   const productIds = [...new Set(cartItems.map((i) => i.productId))];
+  const variantIds = [...new Set(cartItems.map((i) => i.variantId))];
+
   const { data: products, error: prodErr } = await admin
     .from("products")
     .select("id,name,price,availability,is_active")
@@ -103,11 +125,26 @@ export async function createCheckoutOrder(formData: FormData): Promise<{
   if (prodErr || !products) {
     return { ok: false, message: "Cannot load product data" };
   }
-  const map = new Map(products.map((p) => [p.id, p]));
+  const pmap = new Map(products.map((p) => [p.id, p]));
+
+  const { data: variants, error: varErr } = await admin
+    .from("product_variants")
+    .select("id,product_id,label")
+    .in("id", variantIds);
+  if (varErr || !variants) {
+    return { ok: false, message: "Cannot load variants" };
+  }
+  const vmap = new Map(variants.map((v) => [v.id, v]));
+
+  const normalizedLines: Array<CheckoutCartLine & { serverUnitPrice: number }> = [];
 
   for (const item of cartItems) {
-    const p = map.get(item.productId);
+    const p = pmap.get(item.productId);
+    const v = vmap.get(item.variantId);
     if (!p) return { ok: false, message: "Product no longer exists" };
+    if (!v || v.product_id !== item.productId) {
+      return { ok: false, message: "Invalid product variant" };
+    }
     if (!p.is_active) return { ok: false, message: `${p.name} is inactive` };
     if (p.availability === "coming_soon" || p.availability === "out_of_stock") {
       return { ok: false, message: `${p.name} is not available for checkout` };
@@ -115,12 +152,31 @@ export async function createCheckoutOrder(formData: FormData): Promise<{
     if (p.price == null || p.price < 0) {
       return { ok: false, message: `${p.name} has no valid price` };
     }
+    if (item.price !== p.price) {
+      return { ok: false, message: "Price changed — refresh cart and try again" };
+    }
+    normalizedLines.push({
+      ...item,
+      name: p.name,
+      variantLabel: v.label,
+      serverUnitPrice: p.price,
+    });
   }
 
-  const total = cartItems.reduce((sum, item) => {
-    const p = map.get(item.productId);
-    return sum + ((p?.price ?? 0) * item.quantity);
-  }, 0);
+  const total = normalizedLines.reduce(
+    (sum, line) => sum + line.serverUnitPrice * line.quantity,
+    0,
+  );
+
+  const cart_snapshot = normalizedLines.map((line) => ({
+    productId: line.productId,
+    variantId: line.variantId,
+    variantLabel: line.variantLabel,
+    variantImageUrl: line.variantImageUrl,
+    quantity: line.quantity,
+    price: line.serverUnitPrice,
+    name: line.name,
+  }));
 
   const sepayRef = await generateUniqueRef();
   const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
@@ -131,7 +187,7 @@ export async function createCheckoutOrder(formData: FormData): Promise<{
       user_id: user.id,
       sepay_ref: sepayRef,
       amount: total,
-      cart_snapshot: cartItems,
+      cart_snapshot: cart_snapshot,
       shipping_addr: shippingAddr,
       note: note || null,
       expires_at: expiresAt,
