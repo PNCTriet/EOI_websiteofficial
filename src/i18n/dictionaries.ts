@@ -182,6 +182,7 @@ const vi = {
     availabilityComingSoon: "Sắp ra mắt",
     availabilityOutOfStock: "Hết hàng",
     priceNotSet: "Giá cập nhật sau",
+    discountBadge: "−{pct}%",
     cannotAddToCartComingSoon: "Sản phẩm sắp mở bán — chưa thể thêm vào giỏ.",
     cannotAddToCartOutOfStock: "Sản phẩm tạm hết hàng.",
     cartInvalidTitle:
@@ -345,6 +346,11 @@ const vi = {
       availabilityComingSoon: "Sắp ra mắt (giá có thể để trống)",
       availabilityOutOfStock: "Hết hàng (có giá, không bán)",
       priceOptionalHint: "Để trống nếu chưa công bố giá (chỉ khi sắp ra mắt).",
+      compareAtPriceLabel: "Giá gốc (trước giảm)",
+      compareAtPriceHint:
+        "Để trống nếu không giảm giá. Nếu nhập, phải lớn hơn giá bán ở trên để hiển thị gạch ngang.",
+      invalidCompareAtPrice: "Giá gốc phải lớn hơn giá bán.",
+      compareAtPriceNeedsSalePrice: "Cần có giá bán trước khi nhập giá gốc.",
       availabilityShortInStock: "Còn bán",
       customOrderLink: "Tạo đơn custom / link thanh toán cho khách (sản phẩm này)",
     },
@@ -693,6 +699,7 @@ const en: Messages = {
     availabilityComingSoon: "Coming soon",
     availabilityOutOfStock: "Out of stock",
     priceNotSet: "Price TBA",
+    discountBadge: "−{pct}%",
     cannotAddToCartComingSoon: "This product isn’t on sale yet — can’t add to cart.",
     cannotAddToCartOutOfStock: "This product is temporarily out of stock.",
     cartInvalidTitle:
@@ -855,6 +862,11 @@ const en: Messages = {
       availabilityComingSoon: "Coming soon (price optional)",
       availabilityOutOfStock: "Out of stock (price shown, not for sale)",
       priceOptionalHint: "Leave empty if price isn’t announced yet (coming soon only).",
+      compareAtPriceLabel: "Compare-at price (before discount)",
+      compareAtPriceHint:
+        "Leave empty for no discount. If set, it must be higher than the sale price above (strikethrough display).",
+      invalidCompareAtPrice: "Compare-at price must be higher than the sale price.",
+      compareAtPriceNeedsSalePrice: "Set a sale price before a compare-at price.",
       availabilityShortInStock: "For sale",
       customOrderLink: "Custom order / payment link for this product",
     },

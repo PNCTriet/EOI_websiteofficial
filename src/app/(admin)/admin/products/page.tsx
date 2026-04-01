@@ -3,7 +3,8 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ProductActiveToggle } from "@/components/admin/product-active-toggle";
 import { t } from "@/i18n/translate";
-import { formatDate, formatProductPrice } from "@/lib/format-locale";
+import { StoreProductPrice } from "@/components/store/store-product-price";
+import { formatDate } from "@/lib/format-locale";
 import { getServerI18n } from "@/lib/server-i18n";
 import type { ProductRow } from "@/types/database";
 
@@ -98,11 +99,13 @@ export default async function AdminProductsPage() {
                     {p.name}
                   </td>
                   <td className="px-4 py-2 text-eoi-ink">
-                    {formatProductPrice(
-                      locale,
-                      p.price,
-                      tr("store.priceNotSet")
-                    )}
+                    <StoreProductPrice
+                      locale={locale}
+                      price={p.price}
+                      compareAtPrice={p.compare_at_price}
+                      emptyLabel={tr("store.priceNotSet")}
+                      variant="card"
+                    />
                   </td>
                   <td className="px-4 py-2 text-eoi-ink2">
                     {(p.availability ?? "in_stock") === "coming_soon"

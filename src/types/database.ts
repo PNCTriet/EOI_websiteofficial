@@ -25,6 +25,7 @@ export type Database = {
           name: string;
           description: string | null;
           price: number | null;
+          compare_at_price: number | null;
           availability: string;
           material: string | null;
           category: string | null;
@@ -45,6 +46,7 @@ export type Database = {
           name: string;
           description?: string | null;
           price?: number | null;
+          compare_at_price?: number | null;
           availability?: string;
           material?: string | null;
           category?: string | null;
@@ -65,6 +67,7 @@ export type Database = {
           name?: string;
           description?: string | null;
           price?: number | null;
+          compare_at_price?: number | null;
           availability?: string;
           material?: string | null;
           category?: string | null;

@@ -6,7 +6,7 @@ import { CategoryChips } from "@/components/category-chips";
 import { badgeLabel } from "@/i18n/badge-label";
 import { getDictionary } from "@/i18n/dictionaries";
 import { t as translateMsg } from "@/i18n/translate";
-import { formatProductPrice } from "@/lib/format-locale";
+import { StoreProductPrice } from "@/components/store/store-product-price";
 import { getLocale } from "@/lib/locale";
 import { Product3DThumb } from "@/components/store/product-3d-thumb";
 import {
@@ -27,9 +27,9 @@ async function fetchProductsUncached(): Promise<ProductFetchState> {
   try {
     const supabase = createClientWithoutCookies();
     const selectWithThumb =
-      "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
+      "id,name,description,price,compare_at_price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
     const selectWithoutThumb =
-      "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
+      "id,name,description,price,compare_at_price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
 
     async function load(includeThumb: boolean): Promise<{
       data: ProductRow[] | null;
@@ -321,9 +321,13 @@ export default async function StoreHomePage() {
                   </p>
                 ) : null}
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-syne text-[15px] font-extrabold tracking-[-0.5px] text-eoi-ink">
-                    {formatProductPrice(locale, p.price, t("store.priceNotSet"))}
-                  </span>
+                  <StoreProductPrice
+                    locale={locale}
+                    price={p.price}
+                    compareAtPrice={p.compare_at_price}
+                    emptyLabel={t("store.priceNotSet")}
+                    variant="card"
+                  />
                   <span
                     className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-white ${addButtonColor(i)}`}
                     aria-hidden

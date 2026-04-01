@@ -15,6 +15,24 @@ export function formatProductPrice(
   return formatPrice(locale, amount);
 }
 
+/** Giá gốc hợp lệ để hiển thị gạch ngang + giá bán. */
+export function productHasActiveDiscount(
+  price: number | null | undefined,
+  compareAt: number | null | undefined
+): boolean {
+  if (price == null || Number.isNaN(price)) return false;
+  if (compareAt == null || Number.isNaN(compareAt)) return false;
+  return compareAt > price;
+}
+
+export function discountPercentOff(
+  price: number,
+  compareAt: number
+): number | null {
+  if (compareAt <= 0 || compareAt <= price) return null;
+  return Math.round((1 - price / compareAt) * 100);
+}
+
 export function formatDate(
   locale: Locale,
   iso: string,

@@ -132,6 +132,7 @@ export default function AdminProductFormPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [compareAtPrice, setCompareAtPrice] = useState("");
   const [stlUrl, setStlUrl] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -179,6 +180,9 @@ export default function AdminProductFormPage() {
       setName(p.name);
       setDescription(p.description ?? "");
       setPrice(p.price != null ? String(p.price) : "");
+      setCompareAtPrice(
+        p.compare_at_price != null ? String(p.compare_at_price) : "",
+      );
       setAvailability(
         isProductAvailability(p.availability)
           ? p.availability
@@ -465,6 +469,24 @@ export default function AdminProductFormPage() {
       }
     }
 
+    const compareTrim = compareAtPrice.trim();
+    if (compareTrim !== "") {
+      const c = Number(compareTrim);
+      if (Number.isNaN(c) || c < 0) {
+        fe.compareAtPrice = t("admin.products.invalidPrice");
+      } else {
+        const sale =
+          availability === "coming_soon" && priceTrim === ""
+            ? null
+            : Number(priceTrim);
+        if (sale == null || Number.isNaN(sale)) {
+          fe.compareAtPrice = t("admin.products.compareAtPriceNeedsSalePrice");
+        } else if (c <= sale) {
+          fe.compareAtPrice = t("admin.products.invalidCompareAtPrice");
+        }
+      }
+    }
+
     if (!categorySelect) {
       fe.category = t("admin.products.fieldRequired");
     } else if (categorySelect === "__custom__" && !categoryCustom.trim()) {
@@ -522,10 +544,13 @@ export default function AdminProductFormPage() {
         ? null
         : Number(priceTrim);
 
+    const compareTrim = compareAtPrice.trim();
+
     const payload = {
       name: name.trim(),
       description: description.trim() || null,
       price: pricePayload,
+      compare_at_price: compareTrim === "" ? null : Number(compareTrim),
       availability,
       stl_url: stlUrl.trim() || null,
       is_active: isActive,
@@ -725,6 +750,37 @@ export default function AdminProductFormPage() {
           </div>
           {fieldErrors.price ? (
             <p className="mt-1 font-dm text-xs text-red-600">{fieldErrors.price}</p>
+          ) : null}
+        </div>
+
+        <div>
+          <label className="font-dm text-xs font-medium text-eoi-ink2">
+            {t("admin.products.compareAtPriceLabel")}
+            <span className="ml-1 font-normal text-eoi-ink2">
+              ({t("common.optional")})
+            </span>
+          </label>
+          <p className="mt-0.5 font-dm text-[11px] text-eoi-ink2">
+            {t("admin.products.compareAtPriceHint")}
+          </p>
+          <div className="relative mt-1">
+            <input
+              type="number"
+              min={0}
+              step={1000}
+              value={compareAtPrice}
+              onChange={(e) => setCompareAtPrice(e.target.value)}
+              className={`${inputClass} pr-10`}
+              placeholder="—"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-dm text-xs text-eoi-ink2">
+              đ
+            </span>
+          </div>
+          {fieldErrors.compareAtPrice ? (
+            <p className="mt-1 font-dm text-xs text-red-600">
+              {fieldErrors.compareAtPrice}
+            </p>
           ) : null}
         </div>
 

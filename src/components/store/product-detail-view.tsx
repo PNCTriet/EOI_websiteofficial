@@ -12,7 +12,7 @@ import {
   useLocaleContext,
   useTranslations,
 } from "@/components/locale-provider";
-import { formatProductPrice } from "@/lib/format-locale";
+import { StoreProductPrice } from "@/components/store/store-product-price";
 import { storeCategoryLabel } from "@/lib/product-taxonomy";
 import {
   defaultAvailability,
@@ -113,9 +113,13 @@ export function ProductDetailView({ product, variants }: Props) {
             max: String(deliveryMax),
           })}
         </p>
-        <p className="font-syne text-[28px] font-extrabold tracking-[-0.5px] text-eoi-ink">
-          {formatProductPrice(locale, product.price, t("store.priceNotSet"))}
-        </p>
+        <StoreProductPrice
+          locale={locale}
+          price={product.price}
+          compareAtPrice={product.compare_at_price}
+          emptyLabel={t("store.priceNotSet")}
+          variant="detail"
+        />
         <ProductDescription
           content={product.description}
           fallback={

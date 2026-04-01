@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import { t } from "@/i18n/translate";
 import { getServerI18n } from "@/lib/server-i18n";
 import { createClient } from "@/lib/supabase/server";
-import { formatProductPrice } from "@/lib/format-locale";
+import { StoreProductPrice } from "@/components/store/store-product-price";
 import { getLocale } from "@/lib/locale";
 import type { ProductRow } from "@/types/database";
 import { badgeLabel } from "@/i18n/badge-label";
@@ -41,7 +41,7 @@ async function fetchProducts(q: string): Promise<ProductRow[]> {
   const supabase = await createClient();
   const pattern = `%${q}%`;
   const select =
-    "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
+    "id,name,description,price,compare_at_price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
 
   try {
     const { data, error } = await supabase
@@ -205,9 +205,13 @@ export default async function SearchPage({ searchParams }: Props) {
                   )}
 
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="font-syne text-[15px] font-extrabold tracking-[-0.5px] text-eoi-ink">
-                      {formatProductPrice(locale, p.price, t(messages, "store.priceNotSet"))}
-                    </span>
+                    <StoreProductPrice
+                      locale={locale}
+                      price={p.price}
+                      compareAtPrice={p.compare_at_price}
+                      emptyLabel={t(messages, "store.priceNotSet")}
+                      variant="card"
+                    />
                   </div>
                 </div>
               </Link>

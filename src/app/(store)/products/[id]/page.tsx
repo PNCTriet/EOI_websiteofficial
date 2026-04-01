@@ -29,9 +29,9 @@ async function getProduct(id: string): Promise<ProductFetchState> {
   try {
     const supabase = await createClient();
     const selectWithThumb =
-      "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
+      "id,name,description,price,compare_at_price,material,category,delivery_days_min,delivery_days_max,image_urls,image_thumb_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
     const selectWithoutThumb =
-      "id,name,description,price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
+      "id,name,description,price,compare_at_price,material,category,delivery_days_min,delivery_days_max,image_urls,stl_url,is_active,colors,accent_bg,badge,availability,created_at,updated_at";
 
     async function load(includeThumb: boolean): Promise<{
       data: ProductRow | null;
