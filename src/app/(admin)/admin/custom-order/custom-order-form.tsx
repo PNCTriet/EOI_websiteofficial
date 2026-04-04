@@ -30,6 +30,9 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
     },
   ]);
   const [hideFromList, setHideFromList] = useState(true);
+  const [paymentMode, setPaymentMode] = useState<"bank_transfer" | "cod" | "pay_later">(
+    "bank_transfer",
+  );
   const [recipientName, setRecipientName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -90,6 +93,7 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
     setSubmitting(true);
     const fd = new FormData();
     fd.set("hide_from_list", hideFromList ? "true" : "false");
+    fd.set("payment_mode", paymentMode);
     fd.set("recipient_name", recipientName);
     fd.set("phone", phone);
     fd.set("email", email);
@@ -138,6 +142,38 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
           </span>
         </span>
       </label>
+
+      <div className="rounded-xl border border-eoi-border bg-white p-3">
+        <p className="font-dm text-sm font-semibold text-eoi-ink">{t("admin.customOrder.paymentMode")}</p>
+        <p className="mt-0.5 font-dm text-[11px] text-eoi-ink2">{t("admin.customOrder.paymentModeHint")}</p>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          {(
+            [
+              ["bank_transfer", "admin.customOrder.paymentModeBank"],
+              ["cod", "admin.customOrder.paymentModeCod"],
+              ["pay_later", "admin.customOrder.paymentModePayLater"],
+            ] as const
+          ).map(([value, labelKey]) => (
+            <label
+              key={value}
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 font-dm text-sm ${
+                paymentMode === value
+                  ? "border-eoi-pink bg-eoi-pink-light/40 text-eoi-ink"
+                  : "border-eoi-border text-eoi-ink2"
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment_mode_ui"
+                checked={paymentMode === value}
+                onChange={() => setPaymentMode(value)}
+                className="accent-eoi-pink"
+              />
+              {t(labelKey)}
+            </label>
+          ))}
+        </div>
+      </div>
 
       <div className="space-y-3 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
         <p className="font-dm text-sm font-semibold text-eoi-ink">{t("admin.customOrder.lines")}</p>

@@ -1,5 +1,6 @@
 import { t } from "@/i18n/translate";
 import { createClient } from "@/lib/supabase/server";
+import { claimOrdersMatchingEmail } from "@/lib/claim-orders-by-email";
 import { getServerI18n } from "@/lib/server-i18n";
 import { AccountProfileForm } from "@/components/account/profile-form";
 
@@ -11,6 +12,8 @@ export default async function AccountPage() {
   } = await supabase.auth.getUser();
 
   if (!user) return null;
+
+  await claimOrdersMatchingEmail(user.id, user.email ?? undefined);
 
   const { data: profile } = await supabase
     .from("user_profiles")

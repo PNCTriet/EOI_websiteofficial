@@ -460,6 +460,12 @@ const vi = {
       hideFromList: "Ẩn đơn khỏi danh sách /account/orders",
       hideFromListHint:
         "Bật: khách không thấy đơn trong danh sách; chỉ mở được bằng link có ?access=.",
+      paymentMode: "Hình thức thanh toán",
+      paymentModeHint:
+        "Chuyển khoản: khách quét QR như checkout thường. COD / Thanh toán sau: tạo đơn ngay — vẫn giao khi chưa thu tiền (quản trị xử lý như đơn thường).",
+      paymentModeBank: "Chuyển khoản",
+      paymentModeCod: "COD (thu tiền khi giao)",
+      paymentModePayLater: "Thanh toán sau",
       lines: "Sản phẩm",
       addLine: "Thêm dòng",
       removeLine: "Xóa dòng",
@@ -975,6 +981,12 @@ const en: Messages = {
       hideFromList: "Hide from /account/orders list",
       hideFromListHint:
         "When on: the order won’t appear in the list; only opens via link with ?access=.",
+      paymentMode: "Payment method",
+      paymentModeHint:
+        "Bank transfer: customer pays via QR like normal checkout. COD / Pay later: order is created immediately — you can ship before payment is collected.",
+      paymentModeBank: "Bank transfer",
+      paymentModeCod: "COD",
+      paymentModePayLater: "Pay later",
       lines: "Items",
       addLine: "Add line",
       removeLine: "Remove line",

@@ -22,14 +22,6 @@ type Props = {
   };
 };
 
-type Suggestion = {
-  full: string;
-  street: string;
-  ward: string;
-  district: string;
-  province: string;
-};
-
 export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
   const t = useTranslations();
   const { locale } = useLocaleContext();
@@ -42,9 +34,6 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
   const [ward, setWard] = useState(initialAddress.ward ?? "");
   const [district, setDistrict] = useState(initialAddress.district ?? "");
   const [province, setProvince] = useState(initialAddress.province ?? "");
-  const [streetSug, setStreetSug] = useState<Suggestion[]>([]);
-  const [districtSug, setDistrictSug] = useState<Suggestion[]>([]);
-  const [provinceSug, setProvinceSug] = useState<Suggestion[]>([]);
 
   const cartItemsJson = useMemo(
     () =>
@@ -111,40 +100,10 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
             name="street"
             required
             value={street}
-            onChange={(e) => {
-              const v = e.target.value;
-              setStreet(v);
-              if (v.trim().length < 2) {
-                setStreetSug([]);
-                return;
-              }
-              void fetch(`/api/address/suggest?type=street&q=${encodeURIComponent(v)}`)
-                .then((r) => r.json())
-                .then((d: { suggestions?: Suggestion[] }) => setStreetSug(d.suggestions ?? []));
-            }}
+            onChange={(e) => setStreet(e.target.value)}
             placeholder={t("store.checkoutStreetPlaceholder")}
             className="rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm md:col-span-2"
           />
-          {streetSug.length > 0 ? (
-            <div className="md:col-span-2 -mt-2 rounded-xl border border-eoi-border bg-white p-2">
-              {streetSug.map((s) => (
-                <button
-                  key={s.full}
-                  type="button"
-                  className="block w-full rounded px-2 py-1 text-left font-dm text-xs text-eoi-ink hover:bg-eoi-surface"
-                  onClick={() => {
-                    setStreet(s.street || street);
-                    setWard(s.ward || ward);
-                    setDistrict(s.district || district);
-                    setProvince(s.province || province);
-                    setStreetSug([]);
-                  }}
-                >
-                  {s.full}
-                </button>
-              ))}
-            </div>
-          ) : null}
           <input
             name="ward"
             required
@@ -157,73 +116,18 @@ export function CheckoutPageClient({ initialAddress, userInfo }: Props) {
             name="district"
             required
             value={district}
-            onChange={(e) => {
-              const v = e.target.value;
-              setDistrict(v);
-              if (v.trim().length < 2) {
-                setDistrictSug([]);
-                return;
-              }
-              void fetch(`/api/address/suggest?type=district&q=${encodeURIComponent(v)}`)
-                .then((r) => r.json())
-                .then((d: { suggestions?: Suggestion[] }) => setDistrictSug(d.suggestions ?? []));
-            }}
+            onChange={(e) => setDistrict(e.target.value)}
             placeholder={t("store.checkoutDistrictPlaceholder")}
             className="rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm"
           />
-          {districtSug.length > 0 ? (
-            <div className="md:col-span-2 -mt-2 rounded-xl border border-eoi-border bg-white p-2">
-              {districtSug.map((s) => (
-                <button
-                  key={s.full}
-                  type="button"
-                  className="block w-full rounded px-2 py-1 text-left font-dm text-xs text-eoi-ink hover:bg-eoi-surface"
-                  onClick={() => {
-                    setDistrict(s.district || district);
-                    setProvince(s.province || province);
-                    setDistrictSug([]);
-                  }}
-                >
-                  {s.full}
-                </button>
-              ))}
-            </div>
-          ) : null}
           <input
             name="province"
             required
             value={province}
-            onChange={(e) => {
-              const v = e.target.value;
-              setProvince(v);
-              if (v.trim().length < 2) {
-                setProvinceSug([]);
-                return;
-              }
-              void fetch(`/api/address/suggest?type=city&q=${encodeURIComponent(v)}`)
-                .then((r) => r.json())
-                .then((d: { suggestions?: Suggestion[] }) => setProvinceSug(d.suggestions ?? []));
-            }}
+            onChange={(e) => setProvince(e.target.value)}
             placeholder={t("store.checkoutProvincePlaceholder")}
             className="rounded-[10px] border border-eoi-border px-3 py-2 font-dm text-sm md:col-span-2"
           />
-          {provinceSug.length > 0 ? (
-            <div className="md:col-span-2 -mt-2 rounded-xl border border-eoi-border bg-white p-2">
-              {provinceSug.map((s) => (
-                <button
-                  key={s.full}
-                  type="button"
-                  className="block w-full rounded px-2 py-1 text-left font-dm text-xs text-eoi-ink hover:bg-eoi-surface"
-                  onClick={() => {
-                    setProvince(s.province || province);
-                    setProvinceSug([]);
-                  }}
-                >
-                  {s.full}
-                </button>
-              ))}
-            </div>
-          ) : null}
           <textarea
             name="note"
             placeholder={t("store.checkoutNoteOptionalPlaceholder")}

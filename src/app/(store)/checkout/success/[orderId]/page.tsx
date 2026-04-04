@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ClearCartOnCheckoutSuccess } from "@/components/cart/clear-cart-on-checkout-success";
 import { formatPrice } from "@/lib/format-locale";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getServerI18n } from "@/lib/server-i18n";
 import { t } from "@/i18n/translate";
 
@@ -19,23 +20,55 @@ export default async function CheckoutSuccessPage({ params, searchParams }: Prop
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) notFound();
 
-  const { data: order } = await supabase
-    .from("orders")
-    .select("id,sepay_ref,total_amount,stage,hidden_from_account_list,link_access_token")
-    .eq("id", orderId)
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const selectOrder =
+    "id,sepay_ref,total_amount,stage,hidden_from_account_list,link_access_token,user_id";
+
+  type OrderSuccessRow = {
+    id: string;
+    sepay_ref: string | null;
+    total_amount: number;
+    stage: string;
+    hidden_from_account_list: boolean;
+    link_access_token: string | null;
+    user_id: string | null;
+  };
+
+  let order: OrderSuccessRow | null = null;
+
+  if (user) {
+    const { data } = await supabase
+      .from("orders")
+      .select(selectOrder)
+      .eq("id", orderId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    order = data as OrderSuccessRow | null;
+  }
+
+  if (!order && accessQuery && typeof accessQuery === "string" && accessQuery.length > 0) {
+    const admin = createServiceClient();
+    const { data } = await admin.from("orders").select(selectOrder).eq("id", orderId).maybeSingle();
+    const row = data as OrderSuccessRow | null;
+    if (
+      row &&
+      row.hidden_from_account_list &&
+      row.link_access_token &&
+      row.link_access_token === accessQuery
+    ) {
+      order = row;
+    }
+  }
+
   if (!order) notFound();
 
-  if (
-    order.hidden_from_account_list &&
-    order.link_access_token &&
-    accessQuery !== order.link_access_token
-  ) {
-    notFound();
-  }
+  const accessOk =
+    !order.hidden_from_account_list ||
+    !order.link_access_token ||
+    accessQuery === order.link_access_token ||
+    (user?.id != null && user.id === order.user_id);
+
+  if (!accessOk) notFound();
 
   return (
     <div className="px-5 py-8 md:px-6">

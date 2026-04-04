@@ -24,6 +24,24 @@ export function getSiteOriginString(): string {
   return getSiteOriginUrl().origin;
 }
 
+/**
+ * URL gốc cho link đơn custom / chia sẻ — không dùng localhost khi admin chạy local.
+ * Ưu tiên NEXT_PUBLIC_CUSTOM_CHECKOUT_LINK_ORIGIN, rồi NEXT_PUBLIC_SITE_URL, rồi https://eoilinhtinh.com
+ */
+export function getCheckoutLinkOrigin(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_CUSTOM_CHECKOUT_LINK_ORIGIN?.trim() ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (raw) {
+    try {
+      return new URL(raw).origin;
+    } catch {
+      /* ignore */
+    }
+  }
+  return "https://eoilinhtinh.com";
+}
+
 /** Đường dẫn tương đối `/...` hoặc URL tuyệt đối — trả về URL tuyệt đối dùng đúng domain site. */
 export function toAbsoluteSiteUrl(pathOrUrl: string): string {
   if (/^https?:\/\//i.test(pathOrUrl.trim())) {

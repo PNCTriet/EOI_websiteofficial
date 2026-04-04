@@ -47,7 +47,11 @@ export function CheckoutPendingClient({
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      void fetch(`/api/payment-intents/${intentId}/status`)
+      const accessQs =
+        linkAccessToken != null && linkAccessToken !== ""
+          ? `?access=${encodeURIComponent(linkAccessToken)}`
+          : "";
+      void fetch(`/api/payment-intents/${intentId}/status${accessQs}`)
         .then((r) => r.json())
         .then((d: { status?: string; order_id?: string | null }) => {
           if (!d.status) return;

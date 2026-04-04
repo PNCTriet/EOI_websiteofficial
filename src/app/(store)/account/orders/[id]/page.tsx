@@ -3,6 +3,7 @@ import { t } from "@/i18n/translate";
 import { formatDate, formatPrice } from "@/lib/format-locale";
 import { formatShippingAddrLines, parseShippingAddr } from "@/lib/order-shipping";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getServerI18n } from "@/lib/server-i18n";
 import { userPhaseProgress } from "@/lib/order-user-phase";
 import {
@@ -27,31 +28,71 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return null;
+  const selectOrder =
+    "id,sepay_ref,total_amount,stage,created_at,paid_at,shipping_addr,tracking_number,shipping_carrier,hidden_from_account_list,link_access_token,user_id";
 
-  const { data: order } = await supabase
-    .from("orders")
-    .select(
-      "id,sepay_ref,total_amount,stage,created_at,paid_at,shipping_addr,tracking_number,shipping_carrier,hidden_from_account_list,link_access_token",
-    )
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .maybeSingle();
+  type OrderDetailRow = {
+    id: string;
+    sepay_ref: string | null;
+    total_amount: number;
+    stage: string;
+    created_at: string;
+    paid_at: string | null;
+    shipping_addr: Json | null;
+    tracking_number: string | null;
+    shipping_carrier: string | null;
+    hidden_from_account_list: boolean;
+    link_access_token: string | null;
+    user_id: string | null;
+  };
+
+  let order: OrderDetailRow | null = null;
+
+  if (user) {
+    const { data } = await supabase
+      .from("orders")
+      .select(selectOrder)
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    order = data as OrderDetailRow | null;
+  }
+
+  if (
+    !order &&
+    accessQuery &&
+    typeof accessQuery === "string" &&
+    accessQuery.length > 0
+  ) {
+    const admin = createServiceClient();
+    const { data } = await admin.from("orders").select(selectOrder).eq("id", id).maybeSingle();
+    const row = data as OrderDetailRow | null;
+    if (
+      row &&
+      row.hidden_from_account_list &&
+      row.link_access_token &&
+      row.link_access_token === accessQuery
+    ) {
+      order = row;
+    }
+  }
 
   if (!order) notFound();
 
-  if (
-    order.hidden_from_account_list &&
-    order.link_access_token &&
-    accessQuery !== order.link_access_token
-  ) {
-    notFound();
-  }
+  const accessOk =
+    !order.hidden_from_account_list ||
+    !order.link_access_token ||
+    accessQuery === order.link_access_token ||
+    (user?.id != null && user.id === order.user_id);
+
+  if (!accessOk) notFound();
 
   const stage = order.stage as OrderStage;
   if (stage === "expired") notFound();
 
-  const { data: itemsRaw } = await supabase
+  const readDb = !user ? createServiceClient() : supabase;
+
+  const { data: itemsRaw } = await readDb
     .from("order_items")
     .select(
       "id,product_id,product_name_snapshot,variant_label_snapshot,variant_id,quantity,unit_price, products ( name )",
@@ -64,7 +105,7 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
   ] as string[];
   let variantLabelsById = new Map<string, string>();
   if (variantIds.length > 0) {
-    const { data: pvRows } = await supabase
+    const { data: pvRows } = await readDb
       .from("product_variants")
       .select("id,label")
       .in("id", variantIds);
@@ -73,7 +114,7 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
     );
   }
 
-  const { data: intentRows } = await supabase
+  const { data: intentRows } = await readDb
     .from("payment_intents")
     .select("cart_snapshot")
     .eq("order_id", order.id)
@@ -86,7 +127,7 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
     cartLabels,
   };
 
-  const { data: logsRaw } = await supabase
+  const { data: logsRaw } = await readDb
     .from("order_stage_logs")
     .select("id,from_stage,to_stage,created_at")
     .eq("order_id", order.id)

@@ -301,6 +301,10 @@ export type Database = {
           hide_from_account_list: boolean;
           claimed_user_id: string | null;
           payment_intent_id: string | null;
+          order_id: string | null;
+          payment_mode: string;
+          creator_email: string | null;
+          customer_email: string | null;
           created_by: string | null;
           expires_at: string;
           created_at: string;
@@ -314,6 +318,10 @@ export type Database = {
           hide_from_account_list?: boolean;
           claimed_user_id?: string | null;
           payment_intent_id?: string | null;
+          order_id?: string | null;
+          payment_mode?: string;
+          creator_email?: string | null;
+          customer_email?: string | null;
           created_by?: string | null;
           expires_at?: string;
           created_at?: string;
@@ -327,6 +335,10 @@ export type Database = {
           hide_from_account_list?: boolean;
           claimed_user_id?: string | null;
           payment_intent_id?: string | null;
+          order_id?: string | null;
+          payment_mode?: string;
+          creator_email?: string | null;
+          customer_email?: string | null;
           created_by?: string | null;
           expires_at?: string;
           created_at?: string;

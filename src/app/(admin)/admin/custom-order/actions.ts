@@ -5,6 +5,7 @@ import { isUserAdmin } from "@/lib/auth-helpers";
 import { createServiceClient } from "@/lib/supabase/service";
 import { generateLinkAccessToken } from "@/lib/link-access-token";
 import { primaryImageForVariant } from "@/lib/product-variant-images";
+import { getCheckoutLinkOrigin } from "@/lib/site-url";
 import type { ProductRow, ProductVariantRow } from "@/types/database";
 
 type LineIn = { productId: string; variantId: string; quantity: number };
@@ -45,6 +46,11 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
   const district = String(formData.get("district") ?? "").trim();
   const province = String(formData.get("province") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
+  const paymentModeRaw = String(formData.get("payment_mode") ?? "bank_transfer").trim();
+  const payment_mode =
+    paymentModeRaw === "cod" || paymentModeRaw === "pay_later"
+      ? paymentModeRaw
+      : "bank_transfer";
   const linesRaw = String(formData.get("lines_json") ?? "");
 
   if (!recipientName || !phone || !street || !ward || !district || !province) {
@@ -145,6 +151,9 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
 
   const token = await generateUniqueCustomToken();
   const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+  const creatorEmail =
+    typeof user.email === "string" ? user.email.trim() : "";
+
   const { error: linkErr } = await admin
     .from("custom_checkout_links")
     .insert({
@@ -155,6 +164,9 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
       hide_from_account_list: hideFromList,
       created_by: user.id,
       expires_at: expiresAt,
+      payment_mode,
+      creator_email: creatorEmail || null,
+      customer_email: email || null,
     })
     .select("id")
     .single();
@@ -162,8 +174,7 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
     return { ok: false, message: linkErr.message ?? "link_create_failed" };
   }
 
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+  const origin = getCheckoutLinkOrigin();
   const checkoutUrl = `${origin}/checkout/custom/${token}`;
 
   return { ok: true, checkoutUrl };

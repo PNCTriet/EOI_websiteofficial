@@ -4,17 +4,23 @@ import { parseShippingAddr } from "@/lib/order-shipping";
 import { t } from "@/i18n/translate";
 import { formatDate, formatPrice } from "@/lib/format-locale";
 import { getServerI18n } from "@/lib/server-i18n";
-import type { Json } from "@/types/database";
+import type { Json, OrderStage } from "@/types/database";
 
 type CustomerAgg = {
   userId: string;
   orderCount: number;
-  /** Chỉ cộng đơn đã thanh toán (có paid_at). */
+  /** Tổng từ từng dòng order_items (đơn giá snapshot), chỉ đơn hợp lệ. */
   totalSpent: number;
   /** Đơn mới nhất — dùng shipping để hiển thị liên hệ. */
   latestShipping: Json | null;
   lastOrderAt: string;
 };
+
+function countsTowardSpent(stage: OrderStage, paidAt: string | null, paymentMethod: string): boolean {
+  if (stage === "cancelled" || stage === "expired") return false;
+  if (paidAt) return true;
+  return paymentMethod === "cod" || paymentMethod === "pay_later";
+}
 
 export default async function AdminCustomersPage() {
   const { locale, messages } = await getServerI18n();
@@ -30,16 +36,43 @@ export default async function AdminCustomersPage() {
   try {
     const { data: orderRows } = await supabase
       .from("orders")
-      .select("user_id, total_amount, paid_at, shipping_addr, created_at")
+      .select(
+        "id, user_id, total_amount, stage, paid_at, payment_method, shipping_addr, created_at",
+      )
       .not("user_id", "is", null)
       .order("created_at", { ascending: false });
+
+    const qualifyingIds =
+      orderRows
+        ?.filter((o) =>
+          countsTowardSpent(
+            o.stage as OrderStage,
+            o.paid_at,
+            String(o.payment_method ?? "bank_transfer"),
+          ),
+        )
+        .map((o) => o.id) ?? [];
+
+    const sumByOrder = new Map<string, number>();
+    if (qualifyingIds.length > 0) {
+      const { data: itemLines } = await supabase
+        .from("order_items")
+        .select("order_id, quantity, unit_price")
+        .in("order_id", qualifyingIds);
+      for (const l of itemLines ?? []) {
+        const add = Number(l.quantity) * Number(l.unit_price);
+        sumByOrder.set(l.order_id, (sumByOrder.get(l.order_id) ?? 0) + add);
+      }
+    }
 
     const byUser = new Map<string, CustomerAgg>();
 
     for (const o of orderRows ?? []) {
       const uid = o.user_id as string;
       const created = o.created_at as string;
-      const amount = Number(o.total_amount ?? 0);
+      const stage = o.stage as OrderStage;
+      const pm = String(o.payment_method ?? "bank_transfer");
+
       let a = byUser.get(uid);
       if (!a) {
         a = {
@@ -52,12 +85,15 @@ export default async function AdminCustomersPage() {
         byUser.set(uid, a);
       }
       a.orderCount += 1;
-      if (o.paid_at) {
-        a.totalSpent += amount;
-      }
       if (created > a.lastOrderAt) {
         a.lastOrderAt = created;
         a.latestShipping = o.shipping_addr as Json | null;
+      }
+
+      if (countsTowardSpent(stage, o.paid_at, pm)) {
+        const fromLines = sumByOrder.get(o.id);
+        const fallback = Number(o.total_amount ?? 0);
+        a.totalSpent += fromLines != null && fromLines > 0 ? fromLines : fallback;
       }
     }
 

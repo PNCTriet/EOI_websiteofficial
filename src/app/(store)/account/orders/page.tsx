@@ -2,6 +2,7 @@ import Link from "next/link";
 import { t } from "@/i18n/translate";
 import { formatDate, formatPrice } from "@/lib/format-locale";
 import { createClient } from "@/lib/supabase/server";
+import { claimOrdersMatchingEmail } from "@/lib/claim-orders-by-email";
 import { getServerI18n } from "@/lib/server-i18n";
 import type { OrderStage } from "@/types/database";
 
@@ -44,6 +45,8 @@ export default async function AccountOrdersPage({ searchParams }: Props) {
   } = await supabase.auth.getUser();
 
   if (!user) return null;
+
+  await claimOrdersMatchingEmail(user.id, user.email ?? undefined);
 
   const { data } = await supabase
     .from("orders")
