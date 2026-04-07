@@ -6,7 +6,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { generateLinkAccessToken } from "@/lib/link-access-token";
 import { primaryImageForVariant } from "@/lib/product-variant-images";
 import { getCheckoutLinkOrigin } from "@/lib/site-url";
-import type { ProductRow, ProductVariantRow } from "@/types/database";
+import { parseShippingAddr } from "@/lib/order-shipping";
+import type { Json, ProductRow, ProductVariantRow } from "@/types/database";
 
 type LineIn = { productId: string; variantId: string; quantity: number };
 
@@ -178,4 +179,128 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
   const checkoutUrl = `${origin}/checkout/custom/${token}`;
 
   return { ok: true, checkoutUrl };
+}
+
+export type CustomOrderUserOption = {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+};
+
+/** Danh sách user đăng nhập (Auth) + tên từ profile — chỉ admin. */
+export async function listUsersForCustomOrder(): Promise<{
+  ok: boolean;
+  users?: CustomOrderUserOption[];
+  message?: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !isUserAdmin(user)) {
+    return { ok: false, message: "Forbidden" };
+  }
+
+  const admin = createServiceClient();
+  const { data: authData, error } = await admin.auth.admin.listUsers({
+    perPage: 1000,
+  });
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  const ids = authData.users.map((u) => u.id);
+  const { data: profiles } = await admin
+    .from("user_profiles")
+    .select("id, full_name")
+    .in("id", ids);
+
+  const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
+
+  const users: CustomOrderUserOption[] = authData.users.map((u) => {
+    const metaName =
+      u.user_metadata && typeof u.user_metadata.full_name === "string"
+        ? u.user_metadata.full_name
+        : null;
+    return {
+      id: u.id,
+      email: u.email ?? null,
+      display_name: nameById.get(u.id) ?? metaName,
+    };
+  });
+
+  users.sort((a, b) => (a.email ?? "").localeCompare(b.email ?? ""));
+  return { ok: true, users };
+}
+
+export type CustomOrderPrefill = {
+  recipient_name: string;
+  phone: string;
+  email: string;
+  street: string;
+  ward: string;
+  district: string;
+  province: string;
+};
+
+/** Email + địa chỉ mặc định từ `user_profiles` (và Auth). */
+export async function getUserPrefillForCustomOrder(userId: string): Promise<{
+  ok: boolean;
+  prefill?: CustomOrderPrefill;
+  message?: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !isUserAdmin(user)) {
+    return { ok: false, message: "Forbidden" };
+  }
+
+  const id = userId.trim();
+  if (!id) {
+    return { ok: false, message: "invalid" };
+  }
+
+  const admin = createServiceClient();
+  const { data: authData, error: authErr } = await admin.auth.admin.getUserById(id);
+  if (authErr || !authData.user) {
+    return { ok: false, message: "not_found" };
+  }
+
+  const { data: profile } = await admin
+    .from("user_profiles")
+    .select("full_name, phone, default_address")
+    .eq("id", id)
+    .maybeSingle();
+
+  const email = authData.user.email ?? "";
+  const addr = parseShippingAddr((profile?.default_address as Json | null) ?? null);
+
+  const metaName =
+    authData.user.user_metadata &&
+    typeof authData.user.user_metadata.full_name === "string"
+      ? authData.user.user_metadata.full_name
+      : "";
+
+  const recipient_name =
+    addr?.recipient_name?.trim() ||
+    profile?.full_name?.trim() ||
+    metaName ||
+    "";
+
+  const phone = addr?.phone?.trim() || profile?.phone?.trim() || "";
+
+  return {
+    ok: true,
+    prefill: {
+      recipient_name,
+      phone,
+      email,
+      street: addr?.street ?? "",
+      ward: addr?.ward ?? "",
+      district: addr?.district ?? "",
+      province: addr?.province ?? "",
+    },
+  };
 }

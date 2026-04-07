@@ -1,9 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "@/components/locale-provider";
-import { createCustomCheckoutLink } from "./actions";
+import {
+  createCustomCheckoutLink,
+  getUserPrefillForCustomOrder,
+  listUsersForCustomOrder,
+  type CustomOrderUserOption,
+} from "./actions";
 
 type ProductOpt = { id: string; name: string; price: number | null };
 type VariantOpt = { id: string; product_id: string; label: string; sort_order: number };
@@ -45,6 +50,48 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
   const [error, setError] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const [storeUsers, setStoreUsers] = useState<CustomOrderUserOption[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [userFilter, setUserFilter] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void listUsersForCustomOrder().then((res) => {
+      if (cancelled) return;
+      if (res.ok && res.users) setStoreUsers(res.users);
+      setUsersLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredStoreUsers = useMemo(() => {
+    const q = userFilter.trim().toLowerCase();
+    if (!q) return storeUsers;
+    return storeUsers.filter((u) => {
+      const em = (u.email ?? "").toLowerCase();
+      const nm = (u.display_name ?? "").toLowerCase();
+      return em.includes(q) || nm.includes(q);
+    });
+  }, [storeUsers, userFilter]);
+
+  async function applySelectedUser(userId: string) {
+    setSelectedUserId(userId);
+    if (!userId) return;
+    const res = await getUserPrefillForCustomOrder(userId);
+    if (!res.ok || !res.prefill) return;
+    const p = res.prefill;
+    setRecipientName(p.recipient_name);
+    setPhone(p.phone);
+    setEmail(p.email);
+    setStreet(p.street);
+    setWard(p.ward);
+    setDistrict(p.district);
+    setProvince(p.province);
+  }
 
   const variantsByProduct = useMemo(() => {
     const m = new Map<string, VariantOpt[]>();
@@ -255,6 +302,40 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
 
       <div className="space-y-3 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
         <p className="font-dm text-sm font-semibold text-eoi-ink">{t("admin.customOrder.shippingBlock")}</p>
+
+        <div className="rounded-xl border border-eoi-border/80 bg-eoi-surface/40 p-3">
+          <p className="font-dm text-xs font-semibold text-eoi-ink">{t("admin.customOrder.pickUser")}</p>
+          <p className="mt-0.5 font-dm text-[11px] text-eoi-ink2">{t("admin.customOrder.pickUserHint")}</p>
+          {usersLoading ? (
+            <p className="mt-2 font-dm text-xs text-eoi-ink2">{t("admin.customOrder.pickUserLoading")}</p>
+          ) : (
+            <>
+              <input
+                type="search"
+                value={userFilter}
+                onChange={(e) => setUserFilter(e.target.value)}
+                placeholder={t("admin.customOrder.pickUserFilter")}
+                className={`${inputClass} mt-2`}
+                autoComplete="off"
+              />
+              <select
+                value={selectedUserId}
+                onChange={(e) => void applySelectedUser(e.target.value)}
+                className={`${inputClass} mt-2`}
+              >
+                <option value="">{t("admin.customOrder.pickUserNone")}</option>
+                {filteredStoreUsers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {[u.email ?? u.id, u.display_name ? `(${u.display_name})` : ""]
+                      .filter(Boolean)
+                      .join(" ")}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+        </div>
+
         <div>
           <label className="font-dm text-xs text-eoi-ink2">{t("admin.orders.customerName")}</label>
           <input
