@@ -6,6 +6,7 @@ export type EmailTemplateKey =
   | "order_created"
   | "order_paid"
   | "order_shipped"
+  | "custom_order_link_ready"
   | "marketing_broadcast"
   | (string & {});
 

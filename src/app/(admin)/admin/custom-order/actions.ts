@@ -5,8 +5,11 @@ import { isUserAdmin } from "@/lib/auth-helpers";
 import { createServiceClient } from "@/lib/supabase/service";
 import { generateLinkAccessToken } from "@/lib/link-access-token";
 import { primaryImageForVariant } from "@/lib/product-variant-images";
-import { getCheckoutLinkOrigin } from "@/lib/site-url";
-import { parseShippingAddr } from "@/lib/order-shipping";
+import { brandAssets } from "@/lib/brand-assets";
+import { formatOrderLinesHtmlVi } from "@/lib/email-order-lines";
+import { sendTemplatedEmail } from "@/lib/email-center";
+import { formatShippingAddrLines, parseShippingAddr } from "@/lib/order-shipping";
+import { getCheckoutLinkOrigin, getSiteOriginString } from "@/lib/site-url";
 import type { Json, ProductRow, ProductVariantRow } from "@/types/database";
 
 type LineIn = { productId: string; variantId: string; quantity: number };
@@ -177,6 +180,51 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
 
   const origin = getCheckoutLinkOrigin();
   const checkoutUrl = `${origin}/checkout/custom/${token}`;
+
+  if (
+    (payment_mode === "cod" || payment_mode === "pay_later") &&
+    email.trim()
+  ) {
+    const orderTotal = normalized.reduce(
+      (s, l) => s + l.price * l.quantity,
+      0,
+    );
+    const addr = parseShippingAddr(shippingAddr as unknown as Json);
+    const shipping_address = formatShippingAddrLines(addr, "vi");
+    const order_total_display = `${orderTotal.toLocaleString("vi-VN")}đ`;
+    const order_lines_html = formatOrderLinesHtmlVi(
+      normalized.map((l) => ({
+        name: l.name,
+        variant_label: l.variantLabel,
+        quantity: l.quantity,
+        unit_price: l.price,
+      })),
+    );
+    const recipient_label =
+      recipientName.trim() ||
+      email.split("@")[0] ||
+      "Khách";
+    const payment_mode_label =
+      payment_mode === "cod"
+        ? "COD (thu tiền khi giao)"
+        : "Thanh toán sau";
+
+    void sendTemplatedEmail({
+      to: email.trim(),
+      templateKey: "custom_order_link_ready",
+      variables: {
+        recipient_name: recipient_label,
+        checkout_url: checkoutUrl,
+        payment_mode_label,
+        order_total_display,
+        order_lines_html,
+        shipping_address: shipping_address || "—",
+        phone: phone.trim() || "—",
+        site_url: getSiteOriginString(),
+        logo_url: brandAssets.logoTransparent,
+      },
+    });
+  }
 
   return { ok: true, checkoutUrl };
 }

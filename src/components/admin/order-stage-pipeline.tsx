@@ -7,6 +7,7 @@ import {
   allowedTargetStages,
   requiresTrackingForTransition,
 } from "@/lib/order-stage-transitions";
+import { orderStagePipelineButtonClass } from "@/lib/order-stage-entered-at";
 import { slaHoursForStage } from "@/lib/order-stage-sla";
 import type { OrderStage } from "@/types/database";
 
@@ -132,13 +133,7 @@ export function OrderStagePipeline({ orderId, currentStage, enteredStageAt }: Pr
             type="button"
             disabled={saving}
             onClick={() => onPickTarget(s)}
-            className={`rounded-full px-3 py-2 font-dm text-xs font-semibold transition-colors min-h-[40px] ${
-              s === "cancelled"
-                ? "border border-red-200 bg-red-50 text-red-800 hover:bg-red-100"
-                : stage === s
-                  ? "bg-eoi-ink text-white"
-                  : "border border-eoi-border bg-white text-eoi-ink2 hover:border-eoi-ink/30 hover:text-eoi-ink"
-            }`}
+            className={orderStagePipelineButtonClass(s, stage === s)}
           >
             {t(`stagesShort.${s}`)}
           </button>

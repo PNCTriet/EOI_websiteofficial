@@ -1,6 +1,5 @@
-import Link from "next/link";
+import { AdminKanbanOrderCard } from "@/components/admin/admin-kanban-order-card";
 import { t } from "@/i18n/translate";
-import { formatDate, formatPrice } from "@/lib/format-locale";
 import type { Messages } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import type { OrderStage } from "@/types/database";
@@ -57,27 +56,7 @@ export function AdminOrdersKanban({ orders, locale, messages }: Props) {
                 <p className="font-dm text-xs text-eoi-ink2">{tr("admin.orders.kanbanEmpty")}</p>
               ) : (
                 colOrders.map((o) => (
-                  <Link
-                    key={o.id}
-                    href={`/admin/orders/${o.id}`}
-                    className="block rounded-xl border border-eoi-border bg-white p-3 shadow-sm hover:border-eoi-pink/40"
-                  >
-                    <p className="font-dm text-xs text-eoi-ink2">
-                      {o.sepay_ref ?? o.id.slice(0, 8)}
-                    </p>
-                    <p className="mt-1 font-dm text-xs text-eoi-ink">{o.displayName || tr("common.dash")}</p>
-                    <p className="mt-1 font-syne text-sm font-bold text-eoi-ink">
-                      {formatPrice(locale, o.total_amount)}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center justify-between gap-1">
-                      <span className="inline-block rounded-full bg-eoi-border/80 px-2 py-0.5 font-dm text-[10px] font-bold uppercase tracking-wide text-eoi-ink2">
-                        {tr(`stagesShort.${o.stage}`)}
-                      </span>
-                      <span className="font-dm text-[10px] text-eoi-ink2">
-                        {formatDate(locale, o.created_at)}
-                      </span>
-                    </div>
-                  </Link>
+                  <AdminKanbanOrderCard key={o.id} order={o} locale={locale} />
                 ))
               )}
             </div>

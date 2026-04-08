@@ -5,6 +5,11 @@ import { formatShippingAddrLines, parseShippingAddr } from "@/lib/order-shipping
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getServerI18n } from "@/lib/server-i18n";
+import {
+  orderStageBadgeClass,
+  orderStageCardHoverClass,
+  orderStageHistorySurfaceClass,
+} from "@/lib/order-stage-entered-at";
 import { userPhaseProgress } from "@/lib/order-user-phase";
 import {
   buildCartVariantLabelMap,
@@ -172,7 +177,9 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
         {formatPrice(locale, order.total_amount)}
       </p>
 
-      <p className="mt-2 inline-block rounded-full bg-eoi-border/80 px-2.5 py-1 font-dm text-[10px] font-bold uppercase tracking-wide text-eoi-ink">
+      <p
+        className={`mt-2 inline-block rounded-full px-2.5 py-1 font-dm text-[10px] font-bold uppercase tracking-wide ${orderStageBadgeClass(stage)}`}
+      >
         {t(messages, `stages.${stage}`)}
       </p>
 
@@ -185,25 +192,34 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
           <div className="relative mx-auto max-w-2xl">
             <div className="absolute left-0 right-0 top-3 h-1 rounded-full bg-eoi-border" />
             <div
-              className="absolute left-0 top-3 h-1 rounded-full bg-eoi-pink transition-all"
+              className="absolute left-0 top-3 h-1 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-emerald-500 transition-all"
               style={{ width: `${barPct}%` }}
             />
             <div className="relative grid grid-cols-4 gap-2">
               {checkpoints.map((cp, idx) => {
                 const { done, current } = dotState(idx);
                 const highlight = done || current;
+                /* Thanh toán → amber | Chuẩn bị (xử lý) → vàng | Giao → xanh lá */
+                const doneTone = [
+                  "border-amber-600 bg-amber-500 shadow-sm",
+                  "border-yellow-600 bg-yellow-400 shadow-sm",
+                  "border-emerald-600 bg-emerald-500 shadow-sm",
+                  "border-emerald-700 bg-emerald-600 shadow-sm",
+                ][idx]!;
+                const currentTone = [
+                  "border-amber-500 bg-white ring-2 ring-amber-400/70",
+                  "border-yellow-500 bg-white ring-2 ring-yellow-400/80",
+                  "border-emerald-500 bg-white ring-2 ring-emerald-400/70",
+                  "border-emerald-600 bg-white ring-2 ring-emerald-500/70",
+                ][idx]!;
                 return (
                   <div key={cp.key} className="text-center">
                     <span
-                      className={`mx-auto block h-6 w-6 rounded-full border-2 ${
-                        done
-                          ? "border-emerald-600 bg-emerald-500"
-                          : current
-                            ? "border-eoi-pink bg-white ring-2 ring-eoi-pink/40"
-                            : "border-eoi-border bg-white"
+                      className={`mx-auto block h-6 w-6 rounded-full border-2 transition-transform duration-200 ${
+                        done ? doneTone : current ? currentTone : "border-eoi-border bg-white"
                       }`}
                     />
-                    <p className={`mt-2 font-dm text-xs ${highlight ? "text-eoi-ink" : "text-eoi-ink2"}`}>
+                    <p className={`mt-2 font-dm text-xs ${highlight ? "text-eoi-ink font-medium" : "text-eoi-ink2"}`}>
                       {cp.label}
                     </p>
                   </div>
@@ -254,14 +270,18 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
           </p>
           <ul className="mt-2 space-y-2 font-dm text-sm text-eoi-ink">
             {logs.map((log) => {
+              const toSt = log.to_stage as OrderStage;
               const fromLabel = log.from_stage
                 ? t(messages, `stages.${log.from_stage as OrderStage}`)
                 : "—";
-              const toLabel = t(messages, `stages.${log.to_stage as OrderStage}`);
+              const toLabel = t(messages, `stages.${toSt}`);
               return (
-                <li key={log.id} className="flex flex-wrap gap-x-2 border-b border-eoi-border/60 pb-2 last:border-0">
+                <li
+                  key={log.id}
+                  className={`flex flex-wrap gap-x-2 rounded-r-lg px-3 py-2.5 pl-3 last:mb-0 ${orderStageHistorySurfaceClass(toSt)} ${orderStageCardHoverClass}`}
+                >
                   <span className="text-eoi-ink2">{formatDate(locale, log.created_at, true)}</span>
-                  <span>
+                  <span className="text-eoi-ink">
                     {fromLabel} → {toLabel}
                   </span>
                 </li>
@@ -275,7 +295,10 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
         {items.map((it) => {
           const variantLabel = orderItemDisplayVariantLabel(it, variantLabelOpts);
           return (
-          <div key={it.id} className="rounded-lg border border-eoi-border px-3 py-2">
+          <div
+            key={it.id}
+            className={`rounded-lg border border-eoi-border bg-white px-3 py-2 ${orderStageCardHoverClass}`}
+          >
             <p className="font-dm text-sm text-eoi-ink">
               {orderItemDisplayProductName(it, t(messages, "admin.orders.productFallback"))}
             </p>

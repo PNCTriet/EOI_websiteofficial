@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Download, Eye } from "lucide-react";
+import { Download } from "lucide-react";
 import { AdminOrdersKanban } from "@/components/admin/admin-orders-kanban";
-import { OrderStageBadge } from "@/components/admin/order-stage-badge";
+import { AdminOrdersTableRow } from "@/components/admin/admin-orders-table-row";
 import { createClient } from "@/lib/supabase/server";
 import { t } from "@/i18n/translate";
 import { orderCustomerDisplayName } from "@/lib/order-customer-display";
@@ -292,28 +292,19 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                 </tr>
               ) : (
                 orders.map((o, i) => (
-                  <tr key={o.id} className={i % 2 === 1 ? "bg-eoi-surface/50" : ""}>
-                    <td className="px-4 py-3 font-medium text-eoi-ink">
-                      {o.sepay_ref ?? o.id.slice(0, 8)}
-                    </td>
-                    <td className="px-4 py-3 text-eoi-ink2">{displayName(o)}</td>
-                    <td className="px-4 py-3 font-medium text-eoi-ink">
-                      {formatPrice(locale, o.total_amount)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <OrderStageBadge stage={o.stage} />
-                    </td>
-                    <td className="px-4 py-3 text-eoi-ink2">{formatDate(locale, o.created_at)}</td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/orders/${o.id}`}
-                        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-eoi-ink hover:bg-eoi-surface"
-                        aria-label={tr("admin.orders.viewAria")}
-                      >
-                        <Eye size={18} strokeWidth={2} />
-                      </Link>
-                    </td>
-                  </tr>
+                  <AdminOrdersTableRow
+                    key={o.id}
+                    rowIndex={i}
+                    locale={locale}
+                    order={{
+                      id: o.id,
+                      sepay_ref: o.sepay_ref,
+                      total_amount: o.total_amount,
+                      stage: o.stage,
+                      created_at: o.created_at,
+                      displayName: displayName(o),
+                    }}
+                  />
                 ))
               )}
             </tbody>

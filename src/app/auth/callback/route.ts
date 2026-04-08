@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { claimOrdersMatchingEmail } from "@/lib/claim-orders-by-email";
 import { makeRateLimit } from "@/lib/rate-limit";
 import { logEvent } from "@/lib/logging";
 
@@ -22,6 +23,12 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user?.id && user.email) {
+        await claimOrdersMatchingEmail(user.id, user.email);
+      }
       logEvent("auth_callback.ok", { ip, next });
       return NextResponse.redirect(`${origin}${next}`);
     }

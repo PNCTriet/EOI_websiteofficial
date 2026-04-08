@@ -6,7 +6,11 @@ import { OrderStagePipeline } from "@/components/admin/order-stage-pipeline";
 import { createClient } from "@/lib/supabase/server";
 import { t } from "@/i18n/translate";
 import { formatShippingAddrLines, parseShippingAddr } from "@/lib/order-shipping";
-import { enteredCurrentStageAt } from "@/lib/order-stage-entered-at";
+import {
+  enteredCurrentStageAt,
+  orderStageCardHoverClass,
+  orderStageTimelineDotClass,
+} from "@/lib/order-stage-entered-at";
 import { formatDate, formatPrice } from "@/lib/format-locale";
 import { getServerI18n } from "@/lib/server-i18n";
 import { getSiteOriginString } from "@/lib/site-url";
@@ -275,13 +279,19 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             <li className="font-dm text-sm text-eoi-ink2">{tr("admin.orders.noLogs")}</li>
           ) : (
             logs.map((log) => {
+              const to = log.to_stage as OrderStage;
               const from = log.from_stage
                 ? t(messages, `stages.${log.from_stage as OrderStage}`)
                 : tr("common.dash");
-              const toLabel = t(messages, `stages.${log.to_stage}`);
+              const toLabel = t(messages, `stages.${to}`);
               return (
-                <li key={log.id} className="relative font-dm text-sm">
-                  <span className="absolute -left-[calc(1rem+5px)] top-1.5 h-2 w-2 rounded-full bg-eoi-pink" />
+                <li
+                  key={log.id}
+                  className={`relative rounded-r-lg px-3 py-2.5 font-dm text-sm ${orderStageCardHoverClass}`}
+                >
+                  <span
+                    className={`absolute -left-[calc(1rem+5px)] top-3 h-2.5 w-2.5 rounded-full ${orderStageTimelineDotClass(to)} ring-2 ring-white`}
+                  />
                   <span className="text-eoi-ink2">{formatDate(locale, log.created_at, true)}</span>
                   <span className="ml-2 text-eoi-ink">
                     {from} → {toLabel}

@@ -3,6 +3,7 @@ import { sendTemplatedEmail } from "@/lib/email-center";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Json } from "@/types/database";
 import { brandAssets } from "@/lib/brand-assets";
+import { formatOrderLinesHtmlVi } from "@/lib/email-order-lines";
 import { formatShippingAddrLines, parseShippingAddr } from "@/lib/order-shipping";
 import { logEvent } from "@/lib/logging";
 
@@ -240,6 +241,15 @@ export async function POST(request: Request) {
     const shipping_address = formatShippingAddrLines(addr, "vi");
     const recipient_name = addr?.recipient_name?.trim() || email.split("@")[0] || "Customer";
     const phone = addr?.phone?.trim() || "";
+    const order_lines_html = formatOrderLinesHtmlVi(
+      orderItems.map((it) => ({
+        name: it.product_name_snapshot ?? "—",
+        variant_label: it.variant_label_snapshot,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+      })),
+    );
+    const order_total_display = `${Number(intent.amount).toLocaleString("vi-VN")}đ`;
 
     await sendTemplatedEmail({
       to: email,
@@ -248,6 +258,8 @@ export async function POST(request: Request) {
       variables: {
         order_ref: intent.sepay_ref ?? order.id,
         order_total: Number(intent.amount),
+        order_total_display,
+        order_lines_html,
         recipient_name,
         shipping_address,
         phone,
@@ -263,6 +275,8 @@ export async function POST(request: Request) {
       variables: {
         order_ref: intent.sepay_ref,
         order_total: Number(intent.amount),
+        order_total_display,
+        order_lines_html,
       },
     });
   }
