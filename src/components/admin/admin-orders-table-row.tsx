@@ -1,8 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import {
+  Eye,
+  Clock3,
+  CircleDollarSign,
+  Cog,
+  Printer,
+  Truck,
+  PackageCheck,
+  XCircle,
+  TimerOff,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
+import { AdminOrderLabelsInline } from "@/components/admin/admin-order-labels-inline";
 import { OrderPreviewQuickDialog, OrderStageQuickDialog } from "@/components/admin/admin-order-quick-dialogs";
 import { useTranslations } from "@/components/locale-provider";
 import { formatDate, formatPrice } from "@/lib/format-locale";
@@ -38,6 +50,29 @@ export function AdminOrdersTableRow({ order, locale, rowIndex }: Props) {
 
   const rowBg = rowIndex % 2 === 1 ? "bg-eoi-surface/50" : "";
 
+  function stageIcon(stage: OrderStage): LucideIcon {
+    switch (stage) {
+      case "pending_payment":
+        return Clock3;
+      case "paid":
+        return CircleDollarSign;
+      case "processing":
+        return Cog;
+      case "printing":
+        return Printer;
+      case "shipped":
+        return Truck;
+      case "delivered":
+        return PackageCheck;
+      case "cancelled":
+        return XCircle;
+      case "expired":
+        return TimerOff;
+      default:
+        return Clock3;
+    }
+  }
+
   return (
     <>
       <tr className={rowBg}>
@@ -58,10 +93,17 @@ export function AdminOrdersTableRow({ order, locale, rowIndex }: Props) {
           <button
             type="button"
             onClick={() => setStageOpen(true)}
-            className={`inline-flex min-h-[36px] items-center justify-center rounded-full px-2.5 py-1.5 font-dm text-[10px] font-bold uppercase tracking-wide transition hover:opacity-90 ${orderStageBadgeClass(order.stage)}`}
+            className={`inline-flex min-h-[36px] items-center justify-center gap-1 rounded-full px-2.5 py-1.5 font-dm text-[10px] font-bold uppercase tracking-wide transition hover:opacity-90 ${orderStageBadgeClass(order.stage)}`}
           >
+            {(() => {
+              const Icon = stageIcon(order.stage);
+              return <Icon size={12} strokeWidth={2.1} aria-hidden />;
+            })()}
             {t(`stagesShort.${order.stage}`)}
           </button>
+        </td>
+        <td className="px-4 py-3">
+          <AdminOrderLabelsInline orderId={order.id} />
         </td>
         <td className="px-4 py-3 text-eoi-ink2">{formatDate(locale, order.created_at)}</td>
         <td className="px-4 py-3">

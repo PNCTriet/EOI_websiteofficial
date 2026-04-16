@@ -121,7 +121,7 @@ export function OrderStagePipeline({ orderId, currentStage, enteredStageAt }: Pr
   }
 
   return (
-    <div className="rounded-2xl border border-eoi-border bg-white p-3 shadow-sm sm:p-4">
+    <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-3 shadow-sm sm:p-4">
       <p className="font-dm text-xs font-medium uppercase tracking-wide text-eoi-ink2">
         {t("admin.orders.updateStage")}
       </p>
@@ -148,7 +148,7 @@ export function OrderStagePipeline({ orderId, currentStage, enteredStageAt }: Pr
             value={carrier}
             onChange={(e) => setCarrier(e.target.value)}
             placeholder={t("admin.orders.carrierPlaceholder")}
-            className="w-full rounded-[10px] border border-eoi-border bg-white px-3 py-2 font-dm text-sm"
+            className="w-full rounded-[10px] border border-eoi-border bg-eoi-surface px-3 py-2 font-dm text-sm"
             autoComplete="off"
           />
           <input
@@ -156,7 +156,7 @@ export function OrderStagePipeline({ orderId, currentStage, enteredStageAt }: Pr
             value={tracking}
             onChange={(e) => setTracking(e.target.value)}
             placeholder={t("admin.orders.trackingPlaceholder")}
-            className="w-full rounded-[10px] border border-eoi-border bg-white px-3 py-2 font-dm text-sm"
+            className="w-full rounded-[10px] border border-eoi-border bg-eoi-surface px-3 py-2 font-dm text-sm"
             autoComplete="off"
           />
           <div className="flex flex-wrap gap-2">

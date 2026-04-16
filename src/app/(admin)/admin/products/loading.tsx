@@ -5,7 +5,7 @@ export default function AdminProductsLoading() {
         <div className="h-8 w-32 rounded bg-eoi-border" />
         <div className="h-11 w-28 rounded-full bg-eoi-border" />
       </div>
-      <div className="mt-6 h-80 rounded-2xl border border-eoi-border bg-white" />
+      <div className="mt-6 h-80 rounded-2xl border border-eoi-border bg-eoi-surface" />
     </div>
   );
 }

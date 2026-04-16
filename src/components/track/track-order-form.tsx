@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useLocaleContext, useTranslations } from "@/components/locale-provider";
 import { formatDate, formatPrice } from "@/lib/format-locale";
+import { orderStageBadgeClass } from "@/lib/order-stage-entered-at";
 import type { OrderStage } from "@/types/database";
 
 export function TrackOrderForm() {
@@ -63,7 +64,7 @@ export function TrackOrderForm() {
     <div className="mx-auto max-w-lg space-y-6">
       <form
         onSubmit={onSubmit}
-        className="space-y-4 rounded-2xl border border-eoi-border bg-white p-5 shadow-sm"
+        className="space-y-4 rounded-2xl border border-eoi-border bg-eoi-surface p-5 shadow-sm"
       >
         <div>
           <label className="font-dm text-xs font-medium text-eoi-ink2" htmlFor="track-ref">
@@ -109,13 +110,17 @@ export function TrackOrderForm() {
       </form>
 
       {result ? (
-        <div className="rounded-2xl border border-eoi-border bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-5 shadow-sm">
           <p className="font-syne text-lg font-bold text-eoi-ink">
             {result.sepay_ref ?? "—"}
           </p>
           <p className="mt-1 font-dm text-sm text-eoi-ink2">
             {t("store.trackStatus")}:{" "}
-            <span className="font-semibold text-eoi-ink">{t(`stages.${result.stage}`)}</span>
+            <span
+              className={`inline-block rounded-full px-2 py-0.5 font-dm text-[10px] font-bold uppercase tracking-wide ${orderStageBadgeClass(result.stage)}`}
+            >
+              {t(`stages.${result.stage}`)}
+            </span>
           </p>
           <p className="mt-1 font-dm text-sm text-eoi-ink2">
             {t("store.orderTotal")}: {formatPrice(locale, result.total_amount)}

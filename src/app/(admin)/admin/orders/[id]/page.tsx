@@ -152,7 +152,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
           <h2 className="font-syne text-sm font-bold text-eoi-ink">{tr("admin.orders.customer")}</h2>
           <dl className="mt-3 space-y-2 font-dm text-sm text-eoi-ink2">
             <div>
@@ -199,13 +199,13 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           <input
             readOnly
             value={customerDetailUrl}
-            className="mt-1 w-full rounded-[10px] border border-amber-300/80 bg-white px-3 py-2 font-mono text-[11px] text-amber-950"
+            className="mt-1 w-full rounded-[10px] border border-amber-300/80 bg-eoi-surface px-3 py-2 font-mono text-[11px] text-amber-950"
           />
         </div>
       ) : null}
 
       {order.tracking_number || order.shipping_carrier ? (
-        <div className="mt-4 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+        <div className="mt-4 rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
           <h2 className="font-syne text-sm font-bold text-eoi-ink">{tr("admin.orders.shippingTracking")}</h2>
           <dl className="mt-2 grid gap-2 font-dm text-sm sm:grid-cols-2">
             <div>
@@ -220,7 +220,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         </div>
       ) : null}
 
-      <div className="mt-6 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+      <div className="mt-6 rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
         <h2 className="font-syne text-sm font-bold text-eoi-ink">{tr("admin.orders.items")}</h2>
         <div className="mt-3 overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[480px] text-left font-dm text-sm">
@@ -272,7 +272,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         </p>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+      <div className="mt-6 rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
         <h2 className="font-syne text-sm font-bold text-eoi-ink">{tr("admin.orders.timeline")}</h2>
         <ul className="relative mt-4 space-y-4 border-l-2 border-eoi-border pl-4">
           {logs.length === 0 ? (

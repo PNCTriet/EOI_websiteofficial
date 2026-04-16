@@ -7,7 +7,7 @@ export default function AdminOrdersLoading() {
           <div key={i} className="h-10 w-24 rounded-full bg-eoi-border" />
         ))}
       </div>
-      <div className="mt-6 h-72 rounded-2xl border border-eoi-border bg-white" />
+      <div className="mt-6 h-72 rounded-2xl border border-eoi-border bg-eoi-surface" />
     </div>
   );
 }

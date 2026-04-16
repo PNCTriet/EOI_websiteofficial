@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-eoi-bg px-5 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-eoi-border bg-white p-8 shadow-sm">
+      <div className="w-full max-w-md rounded-2xl border border-eoi-border bg-eoi-surface p-8 shadow-sm">
         <div className="flex flex-col items-center gap-3">
           <EoiLogo heightClass="h-14" />
         </div>

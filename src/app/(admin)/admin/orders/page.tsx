@@ -163,7 +163,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           <Link
             href={viewQuery("table")}
             className={`rounded-full px-3 py-2 font-dm text-xs font-semibold min-h-[44px] flex items-center sm:px-4 sm:py-2.5 ${
-              !isKanban ? "bg-eoi-ink text-white" : "border border-eoi-border bg-white text-eoi-ink2"
+              !isKanban ? "bg-eoi-ink text-white" : "border border-eoi-border bg-eoi-surface text-eoi-ink2"
             }`}
           >
             {tr("admin.orders.viewTable")}
@@ -171,14 +171,14 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           <Link
             href={viewQuery("kanban")}
             className={`rounded-full px-3 py-2 font-dm text-xs font-semibold min-h-[44px] flex items-center sm:px-4 sm:py-2.5 ${
-              isKanban ? "bg-eoi-ink text-white" : "border border-eoi-border bg-white text-eoi-ink2"
+              isKanban ? "bg-eoi-ink text-white" : "border border-eoi-border bg-eoi-surface text-eoi-ink2"
             }`}
           >
             {tr("admin.orders.viewKanban")}
           </Link>
           <a
             href={exportHref}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-eoi-border bg-white px-3 py-2 font-dm text-xs font-semibold text-eoi-ink sm:px-4"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-eoi-border bg-eoi-surface px-3 py-2 font-dm text-xs font-semibold text-eoi-ink sm:px-4"
           >
             <Download size={16} strokeWidth={2} aria-hidden />
             {tr("admin.orders.exportCsv")}
@@ -189,7 +189,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       <form
         method="get"
         action="/admin/orders"
-        className="mt-4 flex flex-col gap-3 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end"
+        className="mt-4 flex flex-col gap-3 rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end"
       >
         {isKanban ? <input type="hidden" name="view" value="kanban" /> : null}
         {stageParam && stageParam !== "all" ? <input type="hidden" name="stage" value={stageParam} /> : null}
@@ -248,7 +248,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
               key={tab.labelKey}
               href={href}
               className={`whitespace-nowrap rounded-full px-4 py-2.5 font-dm text-xs font-semibold min-h-[44px] flex items-center ${
-                active ? "bg-eoi-ink text-white" : "border border-eoi-border bg-white text-eoi-ink2"
+                active ? "bg-eoi-ink text-white" : "border border-eoi-border bg-eoi-surface text-eoi-ink2"
               }`}
             >
               {tr(tab.labelKey)}
@@ -271,7 +271,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           messages={messages}
         />
       ) : (
-        <div className="mt-4 overflow-x-auto overscroll-x-contain rounded-2xl border border-eoi-border bg-white shadow-sm sm:mt-6">
+        <div className="mt-4 overflow-x-auto overscroll-x-contain rounded-2xl border border-eoi-border bg-eoi-surface shadow-sm sm:mt-6">
           <table className="w-full min-w-[720px] text-left font-dm text-sm">
             <thead>
               <tr className="border-b border-eoi-border bg-eoi-surface/80">
@@ -279,6 +279,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                 <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.orders.tableCustomer")}</th>
                 <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.orders.tableTotal")}</th>
                 <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.orders.tableStage")}</th>
+                <th className="px-4 py-3 font-medium text-eoi-ink2">Labels</th>
                 <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.orders.tableDate")}</th>
                 <th className="px-4 py-3 font-medium text-eoi-ink2" />
               </tr>
@@ -286,7 +287,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
             <tbody>
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-eoi-ink2">
+                  <td colSpan={7} className="px-4 py-10 text-center text-eoi-ink2">
                     {tr("admin.orders.noOrdersFiltered")}
                   </td>
                 </tr>

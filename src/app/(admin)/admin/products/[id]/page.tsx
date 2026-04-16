@@ -656,7 +656,7 @@ export default function AdminProductFormPage() {
   }
 
   const inputClass =
-    "mt-1 w-full rounded-[10px] border border-eoi-border bg-white px-3 py-3 font-dm text-sm text-eoi-ink outline-none focus:ring-2 focus:ring-eoi-pink/30";
+    "mt-1 w-full rounded-[10px] border border-eoi-border bg-eoi-surface px-3 py-3 font-dm text-sm text-eoi-ink outline-none focus:ring-2 focus:ring-eoi-pink/30";
 
   return (
     <div className="min-w-0">
@@ -666,7 +666,7 @@ export default function AdminProductFormPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="mx-auto mt-4 max-w-xl space-y-5 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm sm:mt-6 sm:p-5"
+        className="mx-auto mt-4 max-w-xl space-y-5 rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm sm:mt-6 sm:p-5"
       >
         <div>
           <label className="font-dm text-xs font-medium text-eoi-ink2">
@@ -892,7 +892,7 @@ export default function AdminProductFormPage() {
                             ),
                           )
                         }
-                        className="h-10 w-14 cursor-pointer rounded border border-eoi-border bg-white"
+                        className="h-10 w-14 cursor-pointer rounded border border-eoi-border bg-eoi-surface"
                         aria-label={`${t("admin.products.colorsLabel")} ${i + 1}`}
                       />
                       <input
@@ -933,7 +933,7 @@ export default function AdminProductFormPage() {
                           <button
                             type="button"
                             onClick={() => removeVariantImageAt(i, ii)}
-                            className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-red-600 shadow ring-1 ring-eoi-border"
+                            className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-eoi-surface text-[11px] font-bold text-red-600 shadow ring-1 ring-eoi-border"
                             aria-label={`${t("admin.products.colorsRemove")} ${ii + 1}`}
                           >
                             ×
@@ -946,7 +946,7 @@ export default function AdminProductFormPage() {
                     type="button"
                     onClick={() => removeVariantRow(i)}
                     disabled={variants.length <= 1}
-                    className="rounded-full border border-eoi-border bg-white px-3 py-2 font-dm text-xs text-eoi-ink disabled:opacity-40"
+                    className="rounded-full border border-eoi-border bg-eoi-surface px-3 py-2 font-dm text-xs text-eoi-ink disabled:opacity-40"
                   >
                     {t("admin.products.removeVariant")}
                   </button>
@@ -1025,7 +1025,7 @@ export default function AdminProductFormPage() {
                 <button
                   type="button"
                   onClick={() => removeImageAt(i)}
-                  className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-red-600 shadow ring-1 ring-eoi-border"
+                  className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-eoi-surface text-[11px] font-bold text-red-600 shadow ring-1 ring-eoi-border"
                   aria-label={`${t("admin.products.colorsRemove")} image ${i + 1}`}
                 >
                   ×
@@ -1076,7 +1076,7 @@ export default function AdminProductFormPage() {
             }`}
           >
             <span
-              className={`absolute top-0.5 block h-6 w-6 rounded-full bg-white shadow transition-transform ${
+              className={`absolute top-0.5 block h-6 w-6 rounded-full bg-eoi-surface shadow transition-transform ${
                 isActive ? "translate-x-5" : "translate-x-0.5"
               }`}
             />
@@ -1102,7 +1102,7 @@ export default function AdminProductFormPage() {
           </button>
           <Link
             href="/admin/products"
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-eoi-border bg-white px-5 py-3 font-dm text-sm font-medium text-eoi-ink"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-eoi-border bg-eoi-surface px-5 py-3 font-dm text-sm font-medium text-eoi-ink"
           >
             {t("common.cancel")}
           </Link>

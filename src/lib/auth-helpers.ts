@@ -8,3 +8,15 @@ export function isUserAdmin(user: User | null | undefined): boolean {
     user.app_metadata?.role === "admin"
   );
 }
+
+export function isUserStaff(user: User | null | undefined): boolean {
+  if (!user) return false;
+  return (
+    user.user_metadata?.role === "staff" ||
+    user.app_metadata?.role === "staff"
+  );
+}
+
+export function isUserAdminOrStaff(user: User | null | undefined): boolean {
+  return isUserAdmin(user) || isUserStaff(user);
+}

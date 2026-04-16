@@ -10,12 +10,19 @@ import {
   ShoppingCart,
   Users,
   Mail,
+  Tags,
+  Megaphone,
+  Wallet,
+  Store,
   LogOut,
   Menu,
   X,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { EoiLogo } from "@/components/eoi-logo";
 import { useTranslations } from "@/components/locale-provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
@@ -25,6 +32,26 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const saved =
+      typeof window !== "undefined" ? window.localStorage.getItem("eoi-theme") : null;
+    const initial =
+      saved === "dark" ||
+      (!saved && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+    setDarkMode(initial);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.classList.toggle("dark", darkMode);
+    try {
+      window.localStorage.setItem("eoi-theme", darkMode ? "dark" : "light");
+    } catch {
+      /* ignore storage errors */
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -46,7 +73,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       { href: "/admin/orders", labelKey: "admin.orders.title", icon: ShoppingCart },
       { href: "/admin/custom-order", labelKey: "admin.customOrder.nav", icon: Link2 },
       { href: "/admin/customers", labelKey: "admin.customers.title", icon: Users },
+      { href: "/admin/campaigns", labelKey: "admin.campaigns.title", icon: Megaphone },
+      { href: "/admin/finance", labelKey: "admin.finance.title", icon: Wallet },
+      { href: "/admin/labels", labelKey: "admin.labels.title", icon: Tags },
       { href: "/admin/emails", labelKey: "admin.emails.title", icon: Mail },
+      { href: "/pos", labelKey: "admin.pos.title", icon: Store },
     ];
 
   async function handleLogout() {
@@ -90,6 +121,17 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         ))}
       </nav>
       <div className="border-t border-white/10 p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <LanguageSwitcher variant="onDark" />
+          <button
+            type="button"
+            onClick={() => setDarkMode((v) => !v)}
+            className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 font-dm text-[11px] font-semibold text-white/90 hover:bg-white/20"
+          >
+            {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+            {darkMode ? t("admin.shell.lightMode") : t("admin.shell.darkMode")}
+          </button>
+        </div>
         <button
           type="button"
           disabled={loggingOut}
@@ -109,6 +151,15 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div className="sticky top-0 z-50 flex items-center justify-between border-b border-eoi-border bg-eoi-ink px-3 py-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
           <EoiLogo heightClass="h-7" />
           <div className="flex items-center gap-2">
+            <LanguageSwitcher variant="onDark" />
+            <button
+              type="button"
+              onClick={() => setDarkMode((v) => !v)}
+              className="flex min-h-[36px] min-w-[36px] items-center justify-center rounded-full border border-white/20 bg-white/10 text-white"
+              aria-label={darkMode ? t("admin.shell.lightMode") : t("admin.shell.darkMode")}
+            >
+              {darkMode ? <Sun size={16} strokeWidth={1.8} /> : <Moon size={16} strokeWidth={1.8} />}
+            </button>
             <button
               type="button"
               onClick={() => setMenuOpen((o) => !o)}

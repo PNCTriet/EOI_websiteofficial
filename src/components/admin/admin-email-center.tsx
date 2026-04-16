@@ -176,7 +176,7 @@ export function AdminEmailCenter() {
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-4">
         {["sent", "delivered", "opened", "clicked", "bounced", "failed"].map((k) => (
-          <div key={k} className="rounded-xl border border-eoi-border bg-white p-3">
+          <div key={k} className="rounded-xl border border-eoi-border bg-eoi-surface p-3">
             <p className="font-dm text-xs uppercase text-eoi-ink2">{k}</p>
             <p className="font-syne text-2xl font-bold text-eoi-ink">{counts[k] ?? 0}</p>
           </div>
@@ -184,7 +184,7 @@ export function AdminEmailCenter() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
           <p className="font-syne text-lg font-bold text-eoi-ink">Templates</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {templates.map((t) => (
@@ -248,22 +248,22 @@ export function AdminEmailCenter() {
                 <textarea
                   value={reviewVarsRaw}
                   onChange={(e) => setReviewVarsRaw(e.target.value)}
-                  className="min-h-[110px] w-full rounded-[10px] border border-eoi-border bg-white px-3 py-2 font-mono text-xs"
+                  className="min-h-[110px] w-full rounded-[10px] border border-eoi-border bg-eoi-surface px-3 py-2 font-mono text-xs"
                 />
                 {!reviewVars ? (
                   <p className="font-dm text-xs text-red-600">Invalid JSON for review variables.</p>
                 ) : (
                   <>
-                    <div className="rounded-lg border border-eoi-border bg-white p-3">
+                    <div className="rounded-lg border border-eoi-border bg-eoi-surface p-3">
                       <p className="font-dm text-xs uppercase text-eoi-ink2">Rendered subject</p>
                       <p className="mt-1 font-dm text-sm text-eoi-ink">{reviewedSubject}</p>
                     </div>
-                    <div className="rounded-lg border border-eoi-border bg-white p-2">
+                    <div className="rounded-lg border border-eoi-border bg-eoi-surface p-2">
                       <p className="px-1 pb-2 font-dm text-xs uppercase text-eoi-ink2">Rendered HTML</p>
                       <iframe
                         title="Template review"
                         srcDoc={reviewedHtml}
-                        className="h-[260px] w-full rounded border border-eoi-border bg-white"
+                        className="h-[260px] w-full rounded border border-eoi-border bg-eoi-surface"
                       />
                     </div>
                   </>
@@ -274,7 +274,7 @@ export function AdminEmailCenter() {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
             <p className="font-syne text-lg font-bold text-eoi-ink">Marketing send</p>
             <div className="mt-3 space-y-2">
               <input
@@ -311,7 +311,7 @@ export function AdminEmailCenter() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
             <p className="font-syne text-lg font-bold text-eoi-ink">Recent campaigns</p>
             <div className="mt-3 space-y-2">
               {campaigns.map((c) => (
@@ -328,7 +328,7 @@ export function AdminEmailCenter() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
         <p className="font-syne text-lg font-bold text-eoi-ink">Email log</p>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[760px] text-left font-dm text-xs">

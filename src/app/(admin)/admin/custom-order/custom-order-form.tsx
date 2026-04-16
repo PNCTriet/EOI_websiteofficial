@@ -107,7 +107,7 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
   }, [catalog.variants]);
 
   const inputClass =
-    "mt-1 w-full rounded-[10px] border border-eoi-border bg-white px-3 py-2.5 font-dm text-sm text-eoi-ink outline-none focus:ring-2 focus:ring-eoi-pink/30";
+    "mt-1 w-full rounded-[10px] border border-eoi-border bg-eoi-surface px-3 py-2.5 font-dm text-sm text-eoi-ink outline-none focus:ring-2 focus:ring-eoi-pink/30";
 
   function setLine(i: number, patch: Partial<Line>) {
     setLines((prev) =>
@@ -175,7 +175,7 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
         <p className="mt-1 font-dm text-sm text-eoi-ink2">{t("admin.customOrder.subtitle")}</p>
       </div>
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-eoi-border bg-white p-3">
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-eoi-border bg-eoi-surface p-3">
         <input
           type="checkbox"
           checked={hideFromList}
@@ -190,7 +190,7 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
         </span>
       </label>
 
-      <div className="rounded-xl border border-eoi-border bg-white p-3">
+      <div className="rounded-xl border border-eoi-border bg-eoi-surface p-3">
         <p className="font-dm text-sm font-semibold text-eoi-ink">{t("admin.customOrder.paymentMode")}</p>
         <p className="mt-0.5 font-dm text-[11px] text-eoi-ink2">{t("admin.customOrder.paymentModeHint")}</p>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -222,7 +222,7 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
         </div>
       </div>
 
-      <div className="space-y-3 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+      <div className="space-y-3 rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
         <p className="font-dm text-sm font-semibold text-eoi-ink">{t("admin.customOrder.lines")}</p>
         {lines.map((line, i) => {
           const vOpts = line.productId ? variantsByProduct.get(line.productId) ?? [] : [];
@@ -300,7 +300,7 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
         </button>
       </div>
 
-      <div className="space-y-3 rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+      <div className="space-y-3 rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
         <p className="font-dm text-sm font-semibold text-eoi-ink">{t("admin.customOrder.shippingBlock")}</p>
 
         <div className="rounded-xl border border-eoi-border/80 bg-eoi-surface/40 p-3">
@@ -415,7 +415,7 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
             <button
               type="button"
               onClick={() => void copyLink()}
-              className="rounded-full border border-emerald-700 bg-white px-4 py-2 font-dm text-xs font-semibold text-emerald-900"
+              className="rounded-full border border-emerald-700 bg-eoi-surface px-4 py-2 font-dm text-xs font-semibold text-emerald-900"
             >
               {copied ? t("admin.customOrder.copied") : t("admin.customOrder.copyLink")}
             </button>

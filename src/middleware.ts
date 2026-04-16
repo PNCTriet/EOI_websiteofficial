@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isUserAdmin } from "@/lib/auth-helpers";
+import { isUserAdmin, isUserAdminOrStaff } from "@/lib/auth-helpers";
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
@@ -31,8 +31,12 @@ export async function middleware(request: NextRequest) {
   const isStoreLogin = pathname === "/login";
   const isCheckout = pathname.startsWith("/checkout");
   const isAccount = pathname.startsWith("/account");
+  const isPosArea = pathname.startsWith("/pos");
 
   if (isAdminArea && !isAdminLogin && !isUserAdmin(user)) {
+    return NextResponse.redirect(new URL("/admin/login", request.url));
+  }
+  if (isPosArea && !isUserAdminOrStaff(user)) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
   if (isAdminLogin && isUserAdmin(user)) {
@@ -50,5 +54,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/checkout/:path*", "/account/:path*"],
+  matcher: ["/admin/:path*", "/pos/:path*", "/login", "/checkout/:path*", "/account/:path*"],
 };

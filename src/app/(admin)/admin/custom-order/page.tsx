@@ -21,7 +21,7 @@ export default async function AdminCustomOrderPage({ searchParams }: Props) {
   return (
     <Suspense
       fallback={
-        <div className="animate-pulse min-h-[240px] rounded-2xl border border-eoi-border bg-white p-6" />
+        <div className="animate-pulse min-h-[240px] rounded-2xl border border-eoi-border bg-eoi-surface p-6" />
       }
     >
       <CustomOrderForm

@@ -166,7 +166,7 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
   }
 
   return (
-    <div className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
       <h2 className="font-syne text-lg font-bold text-eoi-ink">
         {t(messages, "store.orderRef", { ref: order.sepay_ref ?? order.id })}
       </h2>
@@ -207,16 +207,16 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
                   "border-emerald-700 bg-emerald-600 shadow-sm",
                 ][idx]!;
                 const currentTone = [
-                  "border-amber-500 bg-white ring-2 ring-amber-400/70",
-                  "border-yellow-500 bg-white ring-2 ring-yellow-400/80",
-                  "border-emerald-500 bg-white ring-2 ring-emerald-400/70",
-                  "border-emerald-600 bg-white ring-2 ring-emerald-500/70",
+                  "border-amber-500 bg-amber-200 ring-2 ring-amber-400/70",
+                  "border-yellow-500 bg-yellow-200 ring-2 ring-yellow-400/80",
+                  "border-emerald-500 bg-green-200 ring-2 ring-emerald-400/70",
+                  "border-emerald-600 bg-emerald-200 ring-2 ring-emerald-500/70",
                 ][idx]!;
                 return (
                   <div key={cp.key} className="text-center">
                     <span
                       className={`mx-auto block h-6 w-6 rounded-full border-2 transition-transform duration-200 ${
-                        done ? doneTone : current ? currentTone : "border-eoi-border bg-white"
+                        done ? doneTone : current ? currentTone : "border-eoi-border bg-eoi-surface"
                       }`}
                     />
                     <p className={`mt-2 font-dm text-xs ${highlight ? "text-eoi-ink font-medium" : "text-eoi-ink2"}`}>
@@ -236,7 +236,7 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
       )}
 
       {addressText ? (
-        <div className="mt-4 rounded-xl border border-eoi-border bg-white px-3 py-3">
+        <div className="mt-4 rounded-xl border border-eoi-border bg-eoi-surface px-3 py-3">
           <p className="font-dm text-xs font-semibold uppercase text-eoi-ink2">
             {t(messages, "store.orderShippingAddress")}
           </p>
@@ -264,7 +264,7 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
       ) : null}
 
       {logs.length > 0 ? (
-        <div className="mt-4 rounded-xl border border-eoi-border bg-white px-3 py-3">
+        <div className="mt-4 rounded-xl border border-eoi-border bg-eoi-surface px-3 py-3">
           <p className="font-dm text-xs font-semibold uppercase text-eoi-ink2">
             {t(messages, "store.orderStatusHistory")}
           </p>
@@ -297,7 +297,7 @@ export default async function AccountOrderDetailPage({ params, searchParams }: P
           return (
           <div
             key={it.id}
-            className={`rounded-lg border border-eoi-border bg-white px-3 py-2 ${orderStageCardHoverClass}`}
+            className={`rounded-lg border border-eoi-border bg-eoi-surface px-3 py-2 ${orderStageCardHoverClass}`}
           >
             <p className="font-dm text-sm text-eoi-ink">
               {orderItemDisplayProductName(it, t(messages, "admin.orders.productFallback"))}

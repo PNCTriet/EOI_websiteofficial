@@ -15,7 +15,7 @@ export async function GET(_request: Request, { params }: Props) {
     .from("orders")
     .select("id,stage,paid_at,expires_at,sepay_ref,total_amount")
     .eq("id", id)
-    .eq("user_id", user.id)
+    .or(`user_id.eq.${user.id},staff_id.eq.${user.id}`)
     .maybeSingle();
 
   if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });

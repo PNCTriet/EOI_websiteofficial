@@ -127,3 +127,42 @@
 - Phase 2 và 3 phụ thuộc lẫn nhau — hoàn thành Auth trước khi build Checkout
 - [x] Checkout flow da doi sang `payment_intents`: chi tao `orders` khi webhook payment xac nhan thanh toan thanh cong
 - [x] Da bo sung progress timeline o trang chi tiet don `/account/orders/[id]`
+
+---
+
+## Đợt mở rộng mới (POS + Campaign + Finance + Labels) — 2026-04
+
+- [x] Tạo migration mở rộng schema: `orders.source`, `orders.staff_id`, `orders.campaign_id`
+- [x] Bổ sung role `staff` cho `user_profiles` + helper SQL `is_staff_or_admin()`
+- [x] Tạo bảng: `pos_sessions`, `campaigns`, `material_purchases`, `equipment_assets`, `operational_costs`, `labels`, `order_labels`
+- [x] Thiết lập index + RLS policies cho toàn bộ bảng mới (admin/staff phù hợp)
+- [x] API Labels:
+  - [x] `GET/POST /api/admin/labels`
+  - [x] `DELETE /api/admin/labels/[id]`
+  - [x] `GET/POST /api/admin/orders/[id]/labels`
+  - [x] `DELETE /api/admin/orders/[id]/labels/[label_id]`
+- [x] API Campaign:
+  - [x] `GET/POST /api/admin/campaigns`
+  - [x] `PATCH /api/admin/campaigns/[id]`
+- [x] API Finance:
+  - [x] `POST /api/admin/campaigns/[id]/material-purchases`
+  - [x] `POST /api/admin/campaigns/[id]/operational-costs`
+  - [x] `POST /api/admin/equipment-assets`
+  - [x] `GET /api/admin/finance/pnl`
+- [x] API POS:
+  - [x] `GET /api/pos/products`
+  - [x] `POST /api/pos/orders`
+- [x] Middleware:
+  - [x] `/pos/*` cho phép `admin` + `staff`
+  - [x] `/admin/*` giữ admin-only
+- [x] Frontend page mới:
+  - [x] `/pos`
+  - [x] `/admin/campaigns`
+  - [x] `/admin/finance`
+  - [x] `/admin/labels`
+- [x] Orders UI:
+  - [x] Cột labels inline trong `/admin/orders`
+  - [x] Add/remove label nhanh tại bảng đơn
+- [x] Bổ sung menu mới trên admin sidebar: Campaigns, Finance, Labels, POS
+- [x] Chuẩn hóa i18n VI/EN cho toàn bộ màn mới theo `public/document/rule.md`
+- [x] POS QR flow: hiển thị popup giữa màn hình + countdown + polling trạng thái; khi thanh toán thành công hiển thị notify và webhook SePay gửi email xác nhận như checkout thường

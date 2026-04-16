@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice } from "@/lib/format-locale";
 import { useLocaleContext, useTranslations } from "@/components/locale-provider";
+import { orderStageBadgeClass } from "@/lib/order-stage-entered-at";
+import type { OrderStage } from "@/types/database";
 
 type Props = {
   intentId: string;
@@ -120,7 +122,7 @@ export function CheckoutPendingClient({
       ? "border-emerald-300 bg-emerald-50/90 shadow-[0_0_0_4px_rgba(52,211,153,0.35)] transition-all duration-500"
       : flash === "danger"
         ? "border-red-300 bg-red-50/90 shadow-[0_0_0_4px_rgba(248,113,113,0.35)] transition-all duration-500"
-        : "border-eoi-border bg-white";
+        : "border-eoi-border bg-eoi-surface";
 
   return (
     <div className="space-y-4">
@@ -153,7 +155,11 @@ export function CheckoutPendingClient({
           </p>
           <p>
             {t("store.checkoutPendingStatus")}:{" "}
-            <span className="font-semibold text-eoi-ink">
+            <span
+              className={`inline-block rounded-full px-2 py-0.5 font-dm text-[10px] font-bold uppercase tracking-wide ${orderStageBadgeClass(
+                (stage === "pending" ? "pending_payment" : stage) as OrderStage
+              )}`}
+            >
               {t(`stages.${stage === "pending" ? "pending_payment" : stage}`)}
             </span>
           </p>
@@ -179,7 +185,7 @@ export function CheckoutPendingClient({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-eoi-border bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-5 shadow-sm">
         <h2 className="text-center font-syne text-lg font-bold text-eoi-ink">
           {t("store.checkoutPendingProgressTitle")}
         </h2>
@@ -197,7 +203,7 @@ export function CheckoutPendingClient({
                   <div key={cp.key} className="text-center">
                     <span
                       className={`mx-auto block h-6 w-6 rounded-full border-2 ${
-                        done ? "border-eoi-pink bg-eoi-pink" : "border-eoi-border bg-white"
+                        done ? "border-eoi-pink bg-eoi-pink" : "border-eoi-border bg-eoi-surface"
                       }`}
                     />
                     <p className={`mt-2 font-dm text-xs ${done ? "text-eoi-ink" : "text-eoi-ink2"}`}>

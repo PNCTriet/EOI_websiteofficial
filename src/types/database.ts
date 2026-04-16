@@ -208,6 +208,7 @@ export type Database = {
           full_name: string | null;
           phone: string | null;
           avatar_url: string | null;
+          role: string;
           default_address: Json;
           created_at: string;
           updated_at: string;
@@ -217,6 +218,7 @@ export type Database = {
           full_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          role?: string;
           default_address?: Json;
           created_at?: string;
           updated_at?: string;
@@ -226,9 +228,203 @@ export type Database = {
           full_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          role?: string;
           default_address?: Json;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      campaigns: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          started_at: string | null;
+          ended_at: string | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          started_at?: string | null;
+          ended_at?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          started_at?: string | null;
+          ended_at?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      labels: {
+        Row: {
+          id: string;
+          name: string;
+          color: string;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          color: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          color?: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      order_labels: {
+        Row: {
+          order_id: string;
+          label_id: string;
+          tagged_by: string | null;
+          tagged_at: string;
+        };
+        Insert: {
+          order_id: string;
+          label_id: string;
+          tagged_by?: string | null;
+          tagged_at?: string;
+        };
+        Update: {
+          order_id?: string;
+          label_id?: string;
+          tagged_by?: string | null;
+          tagged_at?: string;
+        };
+        Relationships: [];
+      };
+      pos_sessions: {
+        Row: {
+          id: string;
+          staff_id: string | null;
+          opened_at: string;
+          closed_at: string | null;
+          note: string | null;
+        };
+        Insert: {
+          id?: string;
+          staff_id?: string | null;
+          opened_at?: string;
+          closed_at?: string | null;
+          note?: string | null;
+        };
+        Update: {
+          id?: string;
+          staff_id?: string | null;
+          opened_at?: string;
+          closed_at?: string | null;
+          note?: string | null;
+        };
+        Relationships: [];
+      };
+      material_purchases: {
+        Row: {
+          id: string;
+          campaign_id: string | null;
+          material_name: string;
+          supplier: string | null;
+          quantity: number;
+          unit: string;
+          unit_price: number;
+          total_price: number;
+          purchased_at: string;
+          note: string | null;
+        };
+        Insert: {
+          id?: string;
+          campaign_id?: string | null;
+          material_name: string;
+          supplier?: string | null;
+          quantity: number;
+          unit: string;
+          unit_price: number;
+          purchased_at: string;
+          note?: string | null;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string | null;
+          material_name?: string;
+          supplier?: string | null;
+          quantity?: number;
+          unit?: string;
+          unit_price?: number;
+          purchased_at?: string;
+          note?: string | null;
+        };
+        Relationships: [];
+      };
+      equipment_assets: {
+        Row: {
+          id: string;
+          campaign_id: string | null;
+          name: string;
+          purchase_price: number;
+          purchased_at: string;
+          expected_life_months: number | null;
+          status: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id?: string | null;
+          name: string;
+          purchase_price: number;
+          purchased_at: string;
+          expected_life_months?: number | null;
+          status?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string | null;
+          name?: string;
+          purchase_price?: number;
+          purchased_at?: string;
+          expected_life_months?: number | null;
+          status?: string;
+        };
+        Relationships: [];
+      };
+      operational_costs: {
+        Row: {
+          id: string;
+          campaign_id: string | null;
+          category: string;
+          amount: number;
+          cost_date: string;
+          note: string | null;
+        };
+        Insert: {
+          id?: string;
+          campaign_id?: string | null;
+          category: string;
+          amount: number;
+          cost_date: string;
+          note?: string | null;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string | null;
+          category?: string;
+          amount?: number;
+          cost_date?: string;
+          note?: string | null;
         };
         Relationships: [];
       };
@@ -400,6 +596,9 @@ export type Database = {
           sepay_ref: string | null;
           customer_id: string | null;
           user_id: string | null;
+          staff_id: string | null;
+          campaign_id: string | null;
+          source: string;
           total_amount: number;
           stage: OrderStage;
           paid_at: string | null;
@@ -418,6 +617,9 @@ export type Database = {
           sepay_ref?: string | null;
           customer_id?: string | null;
           user_id?: string | null;
+          staff_id?: string | null;
+          campaign_id?: string | null;
+          source?: string;
           total_amount: number;
           stage?: OrderStage;
           paid_at?: string | null;
@@ -436,6 +638,9 @@ export type Database = {
           sepay_ref?: string | null;
           customer_id?: string | null;
           user_id?: string | null;
+          staff_id?: string | null;
+          campaign_id?: string | null;
+          source?: string;
           total_amount?: number;
           stage?: OrderStage;
           paid_at?: string | null;

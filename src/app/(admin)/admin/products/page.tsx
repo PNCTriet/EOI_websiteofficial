@@ -40,7 +40,7 @@ export default async function AdminProductsPage() {
         </Link>
       </div>
 
-      <div className="mt-4 overflow-x-auto overscroll-x-contain rounded-2xl border border-eoi-border bg-white shadow-sm sm:mt-6">
+      <div className="mt-4 overflow-x-auto overscroll-x-contain rounded-2xl border border-eoi-border bg-eoi-surface shadow-sm sm:mt-6">
         <table className="w-full min-w-[820px] text-left font-dm text-sm">
           <thead>
             <tr className="border-b border-eoi-border bg-eoi-surface/80">

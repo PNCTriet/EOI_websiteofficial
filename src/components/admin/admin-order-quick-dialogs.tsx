@@ -122,7 +122,7 @@ export function OrderStageQuickDialog({
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-md rounded-2xl border border-eoi-border bg-white p-5 shadow-xl"
+        className="w-full max-w-md rounded-2xl border border-eoi-border bg-eoi-surface p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="font-syne text-lg font-bold text-eoi-ink">{t("admin.orders.quickStageTitle")}</h3>
@@ -284,7 +284,7 @@ export function OrderPreviewQuickDialog({
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-lg rounded-2xl border border-eoi-border bg-white p-5 shadow-xl"
+        className="w-full max-w-lg rounded-2xl border border-eoi-border bg-eoi-surface p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">

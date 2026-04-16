@@ -21,6 +21,25 @@
   --eoi-purple-light: #f3e8ff;
 }
 
+.dark {
+  --eoi-pink: #f9a8d4;
+  --eoi-pink-dark: #f472b6;
+  --eoi-pink-light: #831843;
+  --eoi-blue: #60a5fa;
+  --eoi-blue-dark: #93c5fd;
+  --eoi-blue-light: #1e3a8a;
+  --eoi-amber: #fbbf24;
+  --eoi-amber-dark: #fcd34d;
+  --eoi-amber-light: #78350f;
+  --eoi-ink: #f3f4f6;
+  --eoi-ink2: #d1d5db;
+  --eoi-surface: #1f2937;
+  --eoi-border: #374151;
+  --eoi-bg: #0b1020;
+  --eoi-green-light: #14532d;
+  --eoi-purple-light: #4c1d95;
+}
+
 html,
 body {
   min-height: 100%;
@@ -29,6 +48,14 @@ body {
 body {
   background-color: var(--eoi-bg);
   color: var(--eoi-ink);
+}
+
+.dark .bg-white {
+  background-color: #111827 !important;
+}
+
+.dark .text-black {
+  color: #f3f4f6 !important;
 }
 
 /* Horizontal scroll chips: hide scrollbar */

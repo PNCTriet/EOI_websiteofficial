@@ -149,7 +149,7 @@ export default async function AccountOrdersPage({ searchParams }: Props) {
   ];
 
   return (
-    <div className="rounded-2xl border border-eoi-border bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
       <h2 className="font-syne text-lg font-bold text-eoi-ink">
         {t(messages, "store.accountOrdersTitle")}
       </h2>
@@ -166,7 +166,7 @@ export default async function AccountOrdersPage({ searchParams }: Props) {
               key={key}
               href={href}
               className={`whitespace-nowrap rounded-full px-4 py-2.5 font-dm text-xs font-semibold min-h-[44px] flex items-center ${
-                active ? "bg-eoi-ink text-white" : "border border-eoi-border bg-white text-eoi-ink2"
+                active ? "bg-eoi-ink text-white" : "border border-eoi-border bg-eoi-surface text-eoi-ink2"
               }`}
             >
               {t(messages, labelKey)}
@@ -186,7 +186,7 @@ export default async function AccountOrdersPage({ searchParams }: Props) {
               <Link
                 key={`intent-${row.id}`}
                 href={`/checkout/pending/${row.id}`}
-                className={`block rounded-xl border border-eoi-border bg-white p-3 ${orderStageListLinkHoverClass}`}
+                className={`block rounded-xl border border-eoi-border bg-eoi-surface p-3 ${orderStageListLinkHoverClass}`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <p className="font-dm text-xs text-eoi-ink2">{row.sepay_ref ?? row.id}</p>
@@ -220,7 +220,7 @@ export default async function AccountOrdersPage({ searchParams }: Props) {
               <Link
                 key={`order-${row.id}`}
                 href={`/account/orders/${row.id}`}
-                className={`block rounded-xl border border-eoi-border bg-white p-3 ${orderStageListLinkHoverClass}`}
+                className={`block rounded-xl border border-eoi-border bg-eoi-surface p-3 ${orderStageListLinkHoverClass}`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <p className="font-dm text-xs text-eoi-ink2">{row.sepay_ref ?? row.id}</p>

@@ -2,18 +2,22 @@ import { createClient } from "@/lib/supabase/server";
 import { orderCustomerDisplayName } from "@/lib/order-customer-display";
 import { parseShippingAddr } from "@/lib/order-shipping";
 import { t } from "@/i18n/translate";
-import { formatDate, formatPrice } from "@/lib/format-locale";
 import { getServerI18n } from "@/lib/server-i18n";
+import { AdminCustomersTable, type CustomerRelatedOrder } from "@/components/admin/admin-customers-table";
 import type { Json, OrderStage } from "@/types/database";
 
 type CustomerAgg = {
-  userId: string;
+  emailKey: string;
+  emailDisplay: string;
+  names: string[];
+  phoneDisplay: string;
   orderCount: number;
   /** Tổng từ từng dòng order_items (đơn giá snapshot), chỉ đơn hợp lệ. */
   totalSpent: number;
   /** Đơn mới nhất — dùng shipping để hiển thị liên hệ. */
   latestShipping: Json | null;
   lastOrderAt: string;
+  relatedOrders: CustomerRelatedOrder[];
 };
 
 function countsTowardSpent(stage: OrderStage, paidAt: string | null, paymentMethod: string): boolean {
@@ -37,10 +41,22 @@ export default async function AdminCustomersPage() {
     const { data: orderRows } = await supabase
       .from("orders")
       .select(
-        "id, user_id, total_amount, stage, paid_at, payment_method, shipping_addr, created_at",
+        "id, sepay_ref, user_id, total_amount, stage, paid_at, payment_method, shipping_addr, created_at",
       )
-      .not("user_id", "is", null)
       .order("created_at", { ascending: false });
+
+    const userIds = [
+      ...new Set((orderRows ?? []).map((o) => o.user_id).filter(Boolean)),
+    ] as string[];
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("user_profiles")
+        .select("id, full_name, phone")
+        .in("id", userIds);
+      profileMap = new Map(
+        (profiles ?? []).map((p) => [p.id, { full_name: p.full_name, phone: p.phone }])
+      );
+    }
 
     const qualifyingIds =
       orderRows
@@ -65,29 +81,58 @@ export default async function AdminCustomersPage() {
       }
     }
 
-    const byUser = new Map<string, CustomerAgg>();
+    const byEmail = new Map<
+      string,
+      CustomerAgg & { namesSet: Set<string> }
+    >();
 
     for (const o of orderRows ?? []) {
-      const uid = o.user_id as string;
+      const uid = o.user_id as string | null;
       const created = o.created_at as string;
       const stage = o.stage as OrderStage;
       const pm = String(o.payment_method ?? "bank_transfer");
+      const addr = parseShippingAddr(o.shipping_addr as Json | null);
+      const emailRaw = addr?.email?.trim() || "";
+      const emailKey = emailRaw.toLowerCase() || (uid ? `uid:${uid}` : `order:${o.id}`);
+      const emailDisplay = emailRaw || tr("common.dash");
+      const profile = uid ? profileMap.get(uid) : undefined;
+      const displayName = orderCustomerDisplayName(
+        o.shipping_addr as Json | null,
+        null,
+        profile?.full_name ?? null
+      );
+      const phoneCandidate = profile?.phone?.trim() || addr?.phone?.trim() || "";
 
-      let a = byUser.get(uid);
+      let a = byEmail.get(emailKey);
       if (!a) {
         a = {
-          userId: uid,
+          emailKey,
+          emailDisplay,
+          names: [],
+          phoneDisplay: phoneCandidate || tr("common.dash"),
           orderCount: 0,
           totalSpent: 0,
           latestShipping: o.shipping_addr as Json | null,
           lastOrderAt: created,
+          relatedOrders: [],
+          namesSet: new Set<string>(),
         };
-        byUser.set(uid, a);
+        byEmail.set(emailKey, a);
       }
       a.orderCount += 1;
+      if (displayName && displayName !== tr("common.dash")) {
+        a.namesSet.add(displayName);
+      }
+      if (emailRaw && a.emailDisplay === tr("common.dash")) {
+        a.emailDisplay = emailRaw;
+      }
+      if (phoneCandidate && a.phoneDisplay === tr("common.dash")) {
+        a.phoneDisplay = phoneCandidate;
+      }
       if (created > a.lastOrderAt) {
         a.lastOrderAt = created;
         a.latestShipping = o.shipping_addr as Json | null;
+        if (phoneCandidate) a.phoneDisplay = phoneCandidate;
       }
 
       if (countsTowardSpent(stage, o.paid_at, pm)) {
@@ -95,22 +140,31 @@ export default async function AdminCustomersPage() {
         const fallback = Number(o.total_amount ?? 0);
         a.totalSpent += fromLines != null && fromLines > 0 ? fromLines : fallback;
       }
+      a.relatedOrders.push({
+        id: o.id,
+        ref: o.sepay_ref ?? o.id.slice(0, 8),
+        createdAt: created,
+        stage,
+        totalAmount: Number(o.total_amount ?? 0),
+      });
     }
 
-    rows = [...byUser.values()].sort(
-      (a, b) => new Date(b.lastOrderAt).getTime() - new Date(a.lastOrderAt).getTime()
-    );
-
-    const userIds = rows.map((r) => r.userId);
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("user_profiles")
-        .select("id, full_name, phone")
-        .in("id", userIds);
-      profileMap = new Map(
-        (profiles ?? []).map((p) => [p.id, { full_name: p.full_name, phone: p.phone }])
-      );
-    }
+    rows = [...byEmail.values()]
+      .map((r) => ({
+        emailKey: r.emailKey,
+        emailDisplay: r.emailDisplay,
+        names:
+          r.namesSet.size > 0 ? [...r.namesSet] : [tr("common.dash")],
+        phoneDisplay: r.phoneDisplay,
+        orderCount: r.orderCount,
+        totalSpent: r.totalSpent,
+        latestShipping: r.latestShipping,
+        lastOrderAt: r.lastOrderAt,
+        relatedOrders: r.relatedOrders.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ),
+      }))
+      .sort((a, b) => new Date(b.lastOrderAt).getTime() - new Date(a.lastOrderAt).getTime());
   } catch {
     rows = [];
   }
@@ -122,49 +176,46 @@ export default async function AdminCustomersPage() {
       </h1>
       <p className="mt-1 font-dm text-sm text-eoi-ink2">{tr("admin.customers.subtitle")}</p>
 
-      <div className="mt-4 overflow-x-auto overscroll-x-contain rounded-2xl border border-eoi-border bg-white shadow-sm sm:mt-6">
-        <table className="w-full min-w-[800px] text-left font-dm text-sm">
-          <thead>
-            <tr className="border-b border-eoi-border bg-eoi-surface/80">
-              <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.customers.tableName")}</th>
-              <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.customers.tableEmail")}</th>
-              <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.customers.tablePhone")}</th>
-              <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.customers.tableOrderCount")}</th>
-              <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.customers.tableTotalSpent")}</th>
-              <th className="px-4 py-3 font-medium text-eoi-ink2">{tr("admin.customers.tableLastOrder")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-eoi-ink2">
-                  {tr("admin.customers.noCustomers")}
-                </td>
-              </tr>
-            ) : (
-              rows.map((row, i) => {
-                const prof = profileMap.get(row.userId);
-                const addr = parseShippingAddr(row.latestShipping);
-                const name =
-                  orderCustomerDisplayName(row.latestShipping, null, prof?.full_name ?? null) ||
-                  tr("common.dash");
-                const email = addr?.email?.trim() || tr("common.dash");
-                const phone = prof?.phone?.trim() || addr?.phone?.trim() || tr("common.dash");
-                return (
-                  <tr key={row.userId} className={i % 2 === 1 ? "bg-eoi-surface/50" : ""}>
-                    <td className="px-4 py-3 font-medium text-eoi-ink">{name}</td>
-                    <td className="px-4 py-3 text-eoi-ink2">{email}</td>
-                    <td className="px-4 py-3 text-eoi-ink2">{phone}</td>
-                    <td className="px-4 py-3 text-eoi-ink">{row.orderCount}</td>
-                    <td className="px-4 py-3 text-eoi-ink">{formatPrice(locale, row.totalSpent)}</td>
-                    <td className="px-4 py-3 text-eoi-ink2">{formatDate(locale, row.lastOrderAt)}</td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminCustomersTable
+        locale={locale}
+        rows={rows}
+        labels={{
+          noCustomers: tr("admin.customers.noCustomers"),
+          tableName: tr("admin.customers.tableName"),
+          tableEmail: tr("admin.customers.tableEmail"),
+          tablePhone: tr("admin.customers.tablePhone"),
+          tableOrderCount: tr("admin.customers.tableOrderCount"),
+          tableTotalSpent: tr("admin.customers.tableTotalSpent"),
+          tableLastOrder: tr("admin.customers.tableLastOrder"),
+          searchPlaceholder: tr("admin.customers.searchPlaceholder"),
+          filterName: tr("admin.customers.filterName"),
+          filterEmail: tr("admin.customers.filterEmail"),
+          filterPhone: tr("admin.customers.filterPhone"),
+          filterMinOrders: tr("admin.customers.filterMinOrders"),
+          filterMinSpent: tr("admin.customers.filterMinSpent"),
+          clearFilters: tr("admin.customers.clearFilters"),
+          popupTitle: tr("admin.customers.popupTitle"),
+          popupClose: tr("admin.customers.popupClose"),
+          popupRelatedOrders: tr("admin.customers.popupRelatedOrders"),
+          popupCustomerInfo: tr("admin.customers.popupCustomerInfo"),
+          popupTotalSpent: tr("admin.customers.popupTotalSpent"),
+          popupOrderCount: tr("admin.customers.popupOrderCount"),
+          popupRefCol: tr("admin.orders.tableRef"),
+          popupDateCol: tr("admin.orders.tableDate"),
+          popupStageCol: tr("admin.orders.tableStage"),
+          popupTotalCol: tr("admin.orders.tableTotal"),
+          stageLabels: {
+            pending_payment: tr("stagesShort.pending_payment"),
+            paid: tr("stagesShort.paid"),
+            processing: tr("stagesShort.processing"),
+            printing: tr("stagesShort.printing"),
+            shipped: tr("stagesShort.shipped"),
+            delivered: tr("stagesShort.delivered"),
+            cancelled: tr("stagesShort.cancelled"),
+            expired: tr("stagesShort.expired"),
+          },
+        }}
+      />
     </div>
   );
 }

@@ -146,7 +146,7 @@ function ToolbarBtn({
       disabled={disabled}
       onClick={onClick}
       className={`flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg text-eoi-ink transition-colors ${
-        pressed ? "bg-white shadow-sm ring-1 ring-eoi-border" : "hover:bg-white/80"
+        pressed ? "bg-eoi-surface shadow-sm ring-1 ring-eoi-border" : "hover:bg-eoi-surface/80"
       } disabled:opacity-40`}
     >
       {children}
@@ -201,7 +201,7 @@ export function ProductDescriptionEditor({
   });
 
   return (
-    <div className="overflow-hidden rounded-[10px] border border-eoi-border bg-white focus-within:ring-2 focus-within:ring-eoi-pink/30">
+    <div className="overflow-hidden rounded-[10px] border border-eoi-border bg-eoi-surface focus-within:ring-2 focus-within:ring-eoi-pink/30">
       <MenuBar editor={editor} />
       <EditorContent editor={editor} />
     </div>

@@ -6,11 +6,11 @@ export default function AdminLoading() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="h-24 rounded-2xl border border-eoi-border bg-white"
+            className="h-24 rounded-2xl border border-eoi-border bg-eoi-surface"
           />
         ))}
       </div>
-      <div className="mt-8 h-64 rounded-2xl border border-eoi-border bg-white" />
+      <div className="mt-8 h-64 rounded-2xl border border-eoi-border bg-eoi-surface" />
     </div>
   );
 }
