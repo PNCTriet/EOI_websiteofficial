@@ -14,6 +14,12 @@ import type { Json, ProductRow, ProductVariantRow } from "@/types/database";
 
 type LineIn = { productId: string; variantId: string; quantity: number };
 
+function isValidNotifyEmail(s: string): boolean {
+  const t = s.trim();
+  if (!t || t.length > 254) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
+}
+
 async function generateUniqueCustomToken(): Promise<string> {
   const admin = createServiceClient();
   for (let i = 0; i < 6; i += 1) {
@@ -50,6 +56,10 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
   const district = String(formData.get("district") ?? "").trim();
   const province = String(formData.get("province") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
+  const notifyEmailRaw = String(formData.get("notify_email") ?? "default").trim();
+  const notify_email: "default" | "off" | "custom" =
+    notifyEmailRaw === "off" || notifyEmailRaw === "custom" ? notifyEmailRaw : "default";
+  const notify_email_custom = String(formData.get("notify_email_custom") ?? "").trim();
   const paymentModeRaw = String(formData.get("payment_mode") ?? "bank_transfer").trim();
   const payment_mode =
     paymentModeRaw === "cod" || paymentModeRaw === "pay_later"
@@ -59,6 +69,10 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
 
   if (!recipientName || !phone || !street || !ward || !district || !province) {
     return { ok: false, message: "address_incomplete" };
+  }
+
+  if (notify_email === "custom" && !isValidNotifyEmail(notify_email_custom)) {
+    return { ok: false, message: "notify_email_invalid" };
   }
 
   let lines: LineIn[];
@@ -181,10 +195,16 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
   const origin = getCheckoutLinkOrigin();
   const checkoutUrl = `${origin}/checkout/custom/${token}`;
 
-  if (
-    (payment_mode === "cod" || payment_mode === "pay_later") &&
-    email.trim()
-  ) {
+  const shouldTryNotifyEmail =
+    notify_email !== "off" &&
+    (payment_mode === "cod" || payment_mode === "pay_later");
+
+  const notifyTo =
+    notify_email === "custom"
+      ? notify_email_custom.trim()
+      : email.trim();
+
+  if (shouldTryNotifyEmail && notifyTo && isValidNotifyEmail(notifyTo)) {
     const orderTotal = normalized.reduce(
       (s, l) => s + l.price * l.quantity,
       0,
@@ -202,7 +222,7 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
     );
     const recipient_label =
       recipientName.trim() ||
-      email.split("@")[0] ||
+      notifyTo.split("@")[0] ||
       "Khách";
     const payment_mode_label =
       payment_mode === "cod"
@@ -210,7 +230,7 @@ export async function createCustomCheckoutLink(formData: FormData): Promise<{
         : "Thanh toán sau";
 
     void sendTemplatedEmail({
-      to: email.trim(),
+      to: notifyTo,
       templateKey: "custom_order_link_ready",
       variables: {
         recipient_name: recipient_label,

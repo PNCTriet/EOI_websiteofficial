@@ -538,6 +538,15 @@ const vi = {
       errAddress: "Thiếu địa chỉ giao hàng.",
       errLines: "Cần ít nhất một dòng sản phẩm hợp lệ.",
       errGeneric: "Không tạo được. Thử lại.",
+      notifyTitle: "Email thông báo link đơn (COD / Thanh toán sau)",
+      notifyHint:
+        "Mặc định gửi tới email trong form giao hàng. Có thể tắt hoặc gửi tới địa chỉ khác (ví dụ email nội bộ).",
+      notifyDefault: "Gửi tới email khách trong form",
+      notifyOff: "Không gửi email",
+      notifyCustom: "Gửi tới email khác",
+      notifyCustomField: "Email nhận thông báo",
+      notifyCustomPlaceholder: "you@example.com",
+      errNotifyEmail: "Email thông báo không hợp lệ.",
     },
     customers: {
       title: "Khách hàng",
@@ -1218,6 +1227,15 @@ const en: Messages = {
       errAddress: "Shipping address incomplete.",
       errLines: "Need at least one valid line.",
       errGeneric: "Could not create. Try again.",
+      notifyTitle: "Order link notification email (COD / Pay later)",
+      notifyHint:
+        "By default sends to the shipping email. You can turn it off or send to another address (e.g. internal).",
+      notifyDefault: "Send to customer email in the form",
+      notifyOff: "Do not send email",
+      notifyCustom: "Send to another email",
+      notifyCustomField: "Notification email",
+      notifyCustomPlaceholder: "you@example.com",
+      errNotifyEmail: "Invalid notification email.",
     },
     customers: {
       title: "Customers",

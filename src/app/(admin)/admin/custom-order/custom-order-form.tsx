@@ -46,6 +46,8 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
   const [district, setDistrict] = useState("");
   const [province, setProvince] = useState("");
   const [note, setNote] = useState("");
+  const [notifyEmail, setNotifyEmail] = useState<"default" | "off" | "custom">("default");
+  const [notifyEmailCustom, setNotifyEmailCustom] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -128,19 +130,32 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
       Forbidden: "admin.customOrder.errForbidden",
       address_incomplete: "admin.customOrder.errAddress",
       lines_invalid: "admin.customOrder.errLines",
+      notify_email_invalid: "admin.customOrder.errNotifyEmail",
     };
     const path = m ? map[m] : undefined;
     return path ? t(path) : t("admin.customOrder.errGeneric");
   }
 
+  const simpleEmailOk = (s: string) => {
+    const x = s.trim();
+    if (!x || x.length > 254) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x);
+  };
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setCheckoutUrl(null);
+    if (notifyEmail === "custom" && !simpleEmailOk(notifyEmailCustom)) {
+      setError(t("admin.customOrder.errNotifyEmail"));
+      return;
+    }
     setSubmitting(true);
     const fd = new FormData();
     fd.set("hide_from_list", hideFromList ? "true" : "false");
     fd.set("payment_mode", paymentMode);
+    fd.set("notify_email", notifyEmail);
+    fd.set("notify_email_custom", notifyEmailCustom);
     fd.set("recipient_name", recipientName);
     fd.set("phone", phone);
     fd.set("email", email);
@@ -299,6 +314,53 @@ export function CustomOrderForm({ catalog, initialProductId, initialVariantId }:
           {t("admin.customOrder.addLine")}
         </button>
       </div>
+
+      {paymentMode === "cod" || paymentMode === "pay_later" ? (
+        <div className="rounded-xl border border-eoi-border bg-eoi-surface p-3">
+          <p className="font-dm text-sm font-semibold text-eoi-ink">{t("admin.customOrder.notifyTitle")}</p>
+          <p className="mt-0.5 font-dm text-[11px] text-eoi-ink2">{t("admin.customOrder.notifyHint")}</p>
+          <div className="mt-3 space-y-2">
+            {(
+              [
+                ["default", "admin.customOrder.notifyDefault"],
+                ["off", "admin.customOrder.notifyOff"],
+                ["custom", "admin.customOrder.notifyCustom"],
+              ] as const
+            ).map(([value, labelKey]) => (
+              <label
+                key={value}
+                className={`flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 font-dm text-sm ${
+                  notifyEmail === value
+                    ? "border-eoi-pink bg-eoi-pink-light/40 text-eoi-ink"
+                    : "border-eoi-border text-eoi-ink2"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="notify_email_ui"
+                  checked={notifyEmail === value}
+                  onChange={() => setNotifyEmail(value)}
+                  className="mt-0.5 accent-eoi-pink"
+                />
+                <span>{t(labelKey)}</span>
+              </label>
+            ))}
+          </div>
+          {notifyEmail === "custom" ? (
+            <div className="mt-2">
+              <label className="font-dm text-[11px] text-eoi-ink2">{t("admin.customOrder.notifyCustomField")}</label>
+              <input
+                type="email"
+                value={notifyEmailCustom}
+                onChange={(e) => setNotifyEmailCustom(e.target.value)}
+                placeholder={t("admin.customOrder.notifyCustomPlaceholder")}
+                className={inputClass}
+                autoComplete="off"
+              />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="space-y-3 rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
         <p className="font-dm text-sm font-semibold text-eoi-ink">{t("admin.customOrder.shippingBlock")}</p>

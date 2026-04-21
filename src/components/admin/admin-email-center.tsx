@@ -51,6 +51,7 @@ export function AdminEmailCenter() {
   const [audience, setAudience] = useState<"all_customers" | "paid_customers" | "custom">("all_customers");
   const [customRecipients, setCustomRecipients] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [toggleBusyKey, setToggleBusyKey] = useState<string | null>(null);
   const [reviewVarsRaw, setReviewVarsRaw] = useState(
     JSON.stringify(
       {
@@ -101,6 +102,29 @@ export function AdminEmailCenter() {
     setSubject(t.subject);
     setHtml(t.html);
     setEnabled(t.enabled);
+  }
+
+  async function setTemplateEnabled(key: string, nextEnabled: boolean) {
+    setToggleBusyKey(key);
+    setMessage("");
+    const res = await fetch(`/api/admin/email/templates/${encodeURIComponent(key)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: nextEnabled }),
+    });
+    setToggleBusyKey(null);
+    if (!res.ok) {
+      setMessage("Failed to update template switch.");
+      return;
+    }
+    setTemplates((prev) =>
+      prev.map((x) => (x.key === key ? { ...x, enabled: nextEnabled } : x)),
+    );
+    if (selectedKey === key) {
+      setEnabled(nextEnabled);
+    }
+    setMessage("Saved.");
+    window.setTimeout(() => setMessage(""), 2500);
   }
 
   async function saveTemplate() {
@@ -181,6 +205,49 @@ export function AdminEmailCenter() {
             <p className="font-syne text-2xl font-bold text-eoi-ink">{counts[k] ?? 0}</p>
           </div>
         ))}
+      </div>
+
+      <div className="rounded-2xl border border-eoi-border bg-eoi-surface p-4 shadow-sm">
+        <p className="font-syne text-lg font-bold text-eoi-ink">Automated email on/off</p>
+        <p className="mt-1 font-dm text-xs text-eoi-ink2">
+          When disabled, the app will not send that template (checkout, payments, shipping, custom-order link,
+          etc.). Edit subject/HTML below per template.
+        </p>
+        <ul className="mt-3 divide-y divide-eoi-border rounded-xl border border-eoi-border">
+          {templates.length === 0 ? (
+            <li className="px-3 py-3 font-dm text-sm text-eoi-ink2">No templates loaded.</li>
+          ) : (
+            templates.map((tpl) => (
+              <li
+                key={tpl.key}
+                className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 font-dm text-sm"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-eoi-ink">{tpl.name}</p>
+                  <p className="font-mono text-[11px] text-eoi-ink2">{tpl.key}</p>
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <label className="flex cursor-pointer items-center gap-2 text-eoi-ink2">
+                    <input
+                      type="checkbox"
+                      checked={tpl.enabled}
+                      disabled={toggleBusyKey === tpl.key}
+                      onChange={(e) => void setTemplateEnabled(tpl.key, e.target.checked)}
+                    />
+                    <span className="text-xs">On</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => pickTemplate(tpl)}
+                    className="rounded-full border border-eoi-border px-3 py-1 text-xs font-semibold text-eoi-ink"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
