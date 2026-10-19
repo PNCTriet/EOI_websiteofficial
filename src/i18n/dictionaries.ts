@@ -233,7 +233,12 @@ const vi = {
     signingIn: "Đang đăng nhập…",
     error: "Đăng nhập thất bại.",
     notAdminError:
-      "Tài khoản chưa có quyền admin. Trong Supabase → Authentication → Users → chọn user → bật Raw User Meta Data hoặc App Metadata và thêm: \"role\": \"admin\" (JSON).",
+      "Tài khoản chưa có quyền admin. Trong Supabase → Authentication → Users → chọn user → App Metadata, thêm: \"role\": \"admin\" (JSON).",
+    or: "hoặc",
+    continueWithGoogle: "Đăng nhập với Google",
+    redirecting: "Đang chuyển hướng…",
+    authFailed: "Đăng nhập Google thất bại. Vui lòng thử lại.",
+    signOut: "Đăng xuất",
   },
   storeLogin: {
     title: "Đăng nhập để mua hàng",
@@ -924,7 +929,12 @@ const en: Messages = {
     signingIn: "Signing in…",
     error: "Sign in failed.",
     notAdminError:
-      "This account is not an admin. In Supabase → Authentication → Users → pick the user → Raw User Meta Data or App Metadata: add \"role\": \"admin\" (JSON).",
+      "This account is not an admin. In Supabase → Authentication → Users → pick the user → App Metadata: add \"role\": \"admin\" (JSON).",
+    or: "or",
+    continueWithGoogle: "Sign in with Google",
+    redirecting: "Redirecting…",
+    authFailed: "Google sign in failed. Please try again.",
+    signOut: "Sign out",
   },
   storeLogin: {
     title: "Sign in to checkout",

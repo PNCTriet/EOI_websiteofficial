@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { claimOrdersMatchingEmail } from "@/lib/claim-orders-by-email";
 import { makeRateLimit } from "@/lib/rate-limit";
 import { logEvent } from "@/lib/logging";
+import { safeNextPath } from "@/lib/safe-next-path";
 
 export async function GET(request: Request) {
   const ip =
@@ -17,7 +18,8 @@ export async function GET(request: Request) {
 
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/account";
+  const next = safeNextPath(searchParams.get("next"), "/account");
+  const isAdminFlow = next === "/admin" || next.startsWith("/admin/");
 
   if (code) {
     const supabase = await createClient();
@@ -35,5 +37,9 @@ export async function GET(request: Request) {
   }
 
   logEvent("auth_callback.failed", { ip, next });
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+  return NextResponse.redirect(
+    isAdminFlow
+      ? `${origin}/admin/login?error=auth_failed`
+      : `${origin}/login?error=auth_failed`
+  );
 }
