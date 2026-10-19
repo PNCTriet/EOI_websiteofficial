@@ -1,20 +1,19 @@
 import type { User } from "@supabase/supabase-js";
 
-/** Admin = role "admin" trong user_metadata hoặc app_metadata (Supabase Dashboard hay đặt ở một trong hai). */
+/**
+ * Admin/staff = role trong app_metadata (chỉ service role / Dashboard ghi được).
+ * Không tin user_metadata: user tự sửa được qua supabase.auth.updateUser().
+ */
+function appRole(user: User | null | undefined): unknown {
+  return user?.app_metadata?.role;
+}
+
 export function isUserAdmin(user: User | null | undefined): boolean {
-  if (!user) return false;
-  return (
-    user.user_metadata?.role === "admin" ||
-    user.app_metadata?.role === "admin"
-  );
+  return appRole(user) === "admin";
 }
 
 export function isUserStaff(user: User | null | undefined): boolean {
-  if (!user) return false;
-  return (
-    user.user_metadata?.role === "staff" ||
-    user.app_metadata?.role === "staff"
-  );
+  return appRole(user) === "staff";
 }
 
 export function isUserAdminOrStaff(user: User | null | undefined): boolean {

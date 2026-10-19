@@ -34,7 +34,9 @@ export async function middleware(request: NextRequest) {
   const isPosArea = pathname.startsWith("/pos");
 
   if (isAdminArea && !isAdminLogin && !isUserAdmin(user)) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    // Đã đăng nhập (vd. Google) nhưng không phải admin → báo rõ trên trang login admin.
+    const target = user ? "/admin/login?error=not_admin" : "/admin/login";
+    return NextResponse.redirect(new URL(target, request.url));
   }
   if (isPosArea && !isUserAdminOrStaff(user)) {
     return NextResponse.redirect(new URL("/admin/login", request.url));

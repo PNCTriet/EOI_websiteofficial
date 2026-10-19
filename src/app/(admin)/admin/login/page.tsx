@@ -1,19 +1,71 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Chrome } from "lucide-react";
 import { EoiLogo } from "@/components/eoi-logo";
 import { useTranslations } from "@/components/locale-provider";
 import { isUserAdmin } from "@/lib/auth-helpers";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminLoginForm />
+    </Suspense>
+  );
+}
+
+function AdminLoginForm() {
   const t = useTranslations();
   const router = useRouter();
+  const search = useSearchParams();
+  const errorParam = search.get("error");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [signedOutNotice, setSignedOutNotice] = useState(false);
+
+  const queryError =
+    errorParam === "not_admin"
+      ? t("login.notAdminError")
+      : errorParam === "auth_failed"
+        ? t("login.authFailed")
+        : null;
+
+  async function signInWithGoogle() {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      const supabase = createClient();
+      const origin =
+        typeof window !== "undefined"
+          ? window.location.origin
+          : (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+      const { error: signErr } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/admin")}`,
+        },
+      });
+      if (signErr) {
+        setError(signErr.message);
+        setGoogleLoading(false);
+      }
+    } catch {
+      setGoogleLoading(false);
+    }
+  }
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setSignedOutNotice(true);
+    router.replace("/admin/login");
+    router.refresh();
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,7 +103,42 @@ export default function AdminLoginPage() {
           {t("login.adminBadge")}
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        <div className="mt-8">
+          <button
+            type="button"
+            onClick={() => void signInWithGoogle()}
+            disabled={googleLoading || loading}
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-eoi-border bg-white px-4 py-3 font-dm text-sm font-medium text-eoi-ink disabled:opacity-60"
+          >
+            <Chrome size={18} strokeWidth={2} />
+            {googleLoading ? t("login.redirecting") : t("login.continueWithGoogle")}
+          </button>
+        </div>
+
+        {queryError && !signedOutNotice ? (
+          <div className="mt-4 space-y-2" role="alert">
+            <p className="font-dm text-xs text-red-600">{queryError}</p>
+            {errorParam === "not_admin" ? (
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                className="font-dm text-xs font-medium text-eoi-ink underline"
+              >
+                {t("login.signOut")}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-eoi-border" />
+          <span className="font-dm text-xs uppercase tracking-wider text-eoi-ink2">
+            {t("login.or")}
+          </span>
+          <span className="h-px flex-1 bg-eoi-border" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="font-dm text-xs font-medium text-eoi-ink2">
               {t("login.email")}
